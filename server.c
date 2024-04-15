@@ -9,7 +9,7 @@
 #include "utils_v1.h"
 
 #define MAX_PLAYERS 2
-#define BACKLOG 5
+
 #define TIME_INSCRIPTION 15
 
 typedef struct Player
