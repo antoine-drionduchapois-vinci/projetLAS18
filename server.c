@@ -71,31 +71,6 @@ void winner(Player p1, Player p2, char *winner)
 	return;
 }
 
-/**
- * PRE:  serverPort: a valid port number
- * POST: on success, binds a socket to 0.0.0.0:serverPort and listens to it ;
- *       on failure, displays error cause and quits the program
- * RES:  return socket file descriptor
- */
-int initSocketServer(int port)
-{
-	int sockfd = ssocket();
-
-	/* no socket error */
-
-	// setsockopt -> to avoid Address Already in Use
-	// to do before bind !
-	int option = 1;
-	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int));
-
-	sbind(port, sockfd);
-
-	/* no bind error */
-	slisten(sockfd, BACKLOG);
-
-	/* no listen error */
-	return sockfd;
-}
 
 int main(int argc, char **argv)
 {
