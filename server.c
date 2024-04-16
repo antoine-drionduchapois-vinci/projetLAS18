@@ -29,6 +29,16 @@ void endServerHandler(int sig)
 	end_inscriptions = 1;
 }
 
+void run_child(void *arg)
+{
+    int *pipefd = (int *)arg;
+    // Close the write end of the pipe in the child process
+    sclose(pipefd[1]);
+
+    // Process client communication and handle player actions
+    // Use pipefd[0] for communication with the parent process
+}
+
 int main(int argc, char const *argv[])
 {
 	int sockfd, newsockfd, i;
@@ -77,8 +87,27 @@ int main(int argc, char const *argv[])
 					msg.code = INSCRIPTION_KO;
 				}
 				/*ret = */ swrite(newsockfd, &msg, sizeof(msg));
-				printf("Nb Inscriptions : %i\n", nbPLayers);
+				printf("Nombre d' Inscriptions : %i\n", nbPLayers);
 			}
 		}
 	}
+	// Create a pipe and a child process for each player
+    int pipefd[MAX_PLAYERS][2];
+    pid_t pid[MAX_PLAYERS];
+
+    for (i = 0; i < MAX_PLAYERS; i++)
+    {
+        spipe(pipefd[i]);
+
+        pid[i] = fork_and_run1(run_child, pipefd[i]);
+
+        if (pid[i] < 0)
+        {
+            perror("Fork error");
+            exit(EXIT_FAILURE);
+        }
+
+        // Close the read end of the pipe in the parent process
+        sclose(pipefd[i][0]);
+    }
 }
