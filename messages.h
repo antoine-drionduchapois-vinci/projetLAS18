@@ -11,6 +11,10 @@
 #define TILE 12
 #define PLAYED 13
 #define CANCEL_GAME 14
+#define SCORE 15
+#define RANKING 16
+#define TILE 17
+#define END_GAME 18
 #define END_GAME 15
 #define SCORE 16
 #define RANKING 17
