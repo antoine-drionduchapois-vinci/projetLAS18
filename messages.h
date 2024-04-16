@@ -10,6 +10,10 @@
 #define INSCRIPTION_KO 12
 #define START_GAME 13
 #define CANCEL_GAME 14
+#define SCORE 15
+#define RANKING 16
+#define TILE 17
+#define END_GAME 18
 
 typedef struct
 {
