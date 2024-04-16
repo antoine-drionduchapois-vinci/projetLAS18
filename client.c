@@ -11,22 +11,25 @@
 #include "messages.h"
 #include "utils_v1.h"
 
-
-
-int main(int argc, char **argv)
+int initSocketClient(char *serverIP, int serverPort)
 {
+	int sockfd = ssocket();
+	sconnect(serverIP, serverPort, sockfd);
+	return sockfd;
+}
 
-	char pseudo[MAX_PSEUDO];
+int main(int argc, char const *argv[])
+{
+	char pseudo[MAX_CHAR];
 	int sockfd;
 	int ret;
 
 	StructMessage msg;
-	char c;
+	// char inputBuffer[3];
 
-	/* retrieve player name */
 	printf("Bienvenue dans le programe d'inscription au serveur de jeu\n");
 	printf("Pour participer entrez votre nom :\n");
-	ret = sread(0, pseudo, MAX_PSEUDO);
+	ret = sread(0, pseudo, MAX_CHAR);
 	checkNeg(ret, "read client error");
 	pseudo[ret - 1] = '\0';
 	strcpy(msg.messageText, pseudo);
@@ -36,7 +39,6 @@ int main(int argc, char **argv)
 
 	swrite(sockfd, &msg, sizeof(msg));
 
-	/* wait server response */
 	sread(sockfd, &msg, sizeof(msg));
 
 	switch (msg.code)
@@ -53,39 +55,5 @@ int main(int argc, char **argv)
 		break;
 	}
 
-	/* wait start of game or cancel */
-	sread(sockfd, &msg, sizeof(msg));
-
-	if (msg.code == START_GAME)
-	{
-		printf("DEBUT JEU\n");
-		printf("Envoyez P pour Papier, C pour Ciseaux, R pour Pierre, Q pour quitter\n");
-		sread(0, &c, 1);
-		switch (c)
-		{
-		case 'Q':
-			sclose(sockfd);
-			exit(0);
-			break;
-		case 'P':
-			msg.code = PAPIER;
-			break;
-		case 'C':
-			msg.code = CISEAUX;
-			break;
-		case 'R':
-			msg.code = PIERRE;
-			break;
-		default:
-			printf("Valeur incorrecte\n");
-			break;
-		}
-		swrite(sockfd, &msg, sizeof(msg));
-	}
-	else
-	{
-		printf("PARTIE ANNULEE\n");
-		sclose(sockfd);
-	}
-	return 0;
+	printf("%ld\n", sread(sockfd, &msg, sizeof(msg)));
 }
