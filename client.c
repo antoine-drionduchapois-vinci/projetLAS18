@@ -32,7 +32,7 @@ int main(int argc, char const *argv[])
 	ret = sread(0, pseudo, MAX_CHAR);
 	checkNeg(ret, "read client error");
 	pseudo[ret - 1] = '\0';
-	strcpy(msg.messageText, pseudo);
+	strcpy(msg.text, pseudo);
 	msg.code = INSCRIPTION_REQUEST;
 
 	sockfd = initSocketClient(SERVER_IP, SERVER_PORT);
@@ -46,10 +46,6 @@ int main(int argc, char const *argv[])
 	case INSCRIPTION_OK:
 		printf("Réponse du serveur : Inscription acceptée\n");
 		break;
-	case INSCRIPTION_KO:
-		printf("Réponse du serveur : Inscription refusée\n");
-		sclose(sockfd);
-		exit(0);
 	default:
 		printf("Réponse du serveur non prévue %d\n", msg.code);
 		break;

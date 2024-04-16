@@ -36,7 +36,7 @@ int initSocketServer(int port)
 	return sockfd;
 }
 
-void endServerHandler(int sig)
+void restartInscriptions(int sig)
 {
 	end_inscriptions = 1;
 }
@@ -47,7 +47,7 @@ int main(int argc, char const *argv[])
 	StructMessage msg;
 	// int ret;
 
-	ssigaction(SIGALRM, endServerHandler);
+	ssigaction(SIGALRM, restartInscriptions);
 
 	sockfd = initSocketServer(SERVER_PORT);
 	printf("Le serveur tourne sur le port : %i \n", SERVER_PORT);
@@ -68,25 +68,18 @@ int main(int argc, char const *argv[])
 
 			if (msg.code == INSCRIPTION_REQUEST)
 			{
-				printf("Inscription demandée par le joueur : %s\n", msg.messageText);
+				printf("Inscription demandée par le joueur : %s\n", msg.text);
 
-				strcpy(players[i].pseudo, msg.messageText);
+				strcpy(players[i].pseudo, msg.text);
 				players[i].sockfd = newsockfd;
 				i++;
 
-				if (nbPLayers < MAX_PLAYERS)
+				msg.code = INSCRIPTION_OK;
+				nbPLayers++;
+				if (nbPLayers == MAX_PLAYERS)
 				{
-					msg.code = INSCRIPTION_OK;
-					nbPLayers++;
-					if (nbPLayers == MAX_PLAYERS)
-					{
-						alarm(0);
-						end_inscriptions = 1;
-					}
-				}
-				else
-				{
-					msg.code = INSCRIPTION_KO;
+					alarm(0);
+					end_inscriptions = 1;
 				}
 				/*ret = */ swrite(newsockfd, &msg, sizeof(msg));
 				printf("Nb Inscriptions : %i\n", nbPLayers);
