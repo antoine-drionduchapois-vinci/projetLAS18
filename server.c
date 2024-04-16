@@ -22,19 +22,7 @@ typedef struct Player
 Player players[MAX_PLAYERS];
 volatile sig_atomic_t end_inscriptions = 0;
 
-int initSocketServer(int port)
-{
-	int sockfd = ssocket();
 
-	int option = 1;
-	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(int));
-
-	sbind(port, sockfd);
-
-	slisten(sockfd, BACKLOG);
-
-	return sockfd;
-}
 
 void endServerHandler(int sig)
 {
