@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "messages.h"
 #include "utils_v1.h"
@@ -11,6 +12,7 @@
 #define MAX_PLAYERS 2
 #define TIME_INSCRIPTION 15
 #define FILE_NAME "random"
+#define BUFFERSIZE 60
 
 typedef struct Player
 {
@@ -29,7 +31,7 @@ void restartInscriptions(int sig)
 
 void run_child(void *arg)
 {
-	int *pipefd = (int *)arg;
+	// int *pipefd = (int *)arg;
 
 	// Process client communication and handle player actions
 	// Use pipefd[0] for communication with the parent process
@@ -105,15 +107,23 @@ int main(int argc, char const *argv[])
 
 		// read "random" file
 		int filefd = sopen(FILE_NAME, O_RDONLY);
-		checkNeg(fd, "Error opening file");
+		checkNeg(filefd, "Error opening file");
 
-		int randoms[20];
+		char bufRd[BUFFERSIZE];
+
+		int nbCharRd = sread(filefd, bufRd, BUFFERSIZE);
+		while (nbCharRd > 0)
+		{
+			int nbCharWr = write(1, bufRd, nbCharRd);
+			checkCond(nbCharWr != nbCharRd, "Error writing stdout");
+			nbCharRd = sread(filefd, bufRd, BUFFERSIZE);
+		}
 
 		// Create a pipe and a child process for each player
-		int pipefd[nbPLayers][2];
-		pid_t pid[nbPLayers];
+		int pipefd[MAX_PLAYERS][2];
+		pid_t pid[MAX_PLAYERS];
 
-		for (i = 0; i < nbPLayers; i++)
+		for (i = 0; i < MAX_PLAYERS; i++)
 		{
 			spipe(pipefd[i]);
 
