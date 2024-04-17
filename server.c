@@ -10,6 +10,7 @@
 
 #define MAX_PLAYERS 2
 #define TIME_INSCRIPTION 15
+#define FILE_NAME "random"
 
 typedef struct Player
 {
@@ -29,8 +30,6 @@ void restartInscriptions(int sig)
 void run_child(void *arg)
 {
 	int *pipefd = (int *)arg;
-	// Close the write end of the pipe in the child process
-	sclose(pipefd[1]);
 
 	// Process client communication and handle player actions
 	// Use pipefd[0] for communication with the parent process
@@ -91,31 +90,40 @@ int main(int argc, char const *argv[])
 				}
 			}
 		}
-		msg.code = CANCEL_GAME;
-		for (int i = 0; i < nbPLayers; i++)
+
+		if (nbPLayers < 2)
 		{
-			swrite(players[i].sockfd, &msg, sizeof(msg));
-			sclose(players[i].sockfd);
-		}
-		printf("Temps de connexion écoulé !\n");
-	}
-	// Create a pipe and a child process for each player
-	int pipefd[MAX_PLAYERS][2];
-	pid_t pid[MAX_PLAYERS];
-
-	for (i = 0; i < MAX_PLAYERS; i++)
-	{
-		spipe(pipefd[i]);
-
-		pid[i] = fork_and_run1(run_child, pipefd[i]);
-
-		if (pid[i] < 0)
-		{
-			perror("Fork error");
-			exit(EXIT_FAILURE);
+			msg.code = CANCEL_GAME;
+			for (int i = 0; i < nbPLayers; i++)
+			{
+				swrite(players[i].sockfd, &msg, sizeof(msg));
+				sclose(players[i].sockfd);
+			}
+			printf("Temps de connexion écoulé !\n");
+			continue;
 		}
 
-		// Close the read end of the pipe in the parent process
-		sclose(pipefd[i][0]);
+		// read "random" file
+		int filefd = sopen(FILE_NAME, O_RDONLY);
+		checkNeg(fd, "Error opening file");
+
+		int randoms[20];
+
+		// Create a pipe and a child process for each player
+		int pipefd[nbPLayers][2];
+		pid_t pid[nbPLayers];
+
+		for (i = 0; i < nbPLayers; i++)
+		{
+			spipe(pipefd[i]);
+
+			pid[i] = fork_and_run1(run_child, pipefd[i]);
+
+			if (pid[i] < 0)
+			{
+				perror("Fork error");
+				exit(EXIT_FAILURE);
+			}
+		}
 	}
 }
