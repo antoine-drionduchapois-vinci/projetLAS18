@@ -52,38 +52,40 @@ int main(int argc, char const *argv[])
 	sockfd = initSocketServer(SERVER_PORT);
 	printf("Le serveur tourne sur le port : %i \n", SERVER_PORT);
 
-	alarm(TIME_INSCRIPTION);
-
-	i = 0;
-	int nbPLayers = 0;
-
-	while (!end_inscriptions)
+	while (true)
 	{
-		newsockfd = accept(sockfd, NULL, NULL);
+		end_inscriptions = 0;
+		alarm(TIME_INSCRIPTION);
+		printf("Début des inscriptions\n");
 
-		if (newsockfd > 0)
+		i = 0;
+		int nbPLayers = 0;
+
+		while (!end_inscriptions)
 		{
+			newsockfd = accept(sockfd, NULL, NULL);
 
-			/*ret = */ sread(newsockfd, &msg, sizeof(msg));
-
-			if (msg.code == INSCRIPTION_REQUEST)
+			if (newsockfd > 0)
 			{
-				printf("Inscription demandée par le joueur : %s\n", msg.text);
 
-				strcpy(players[i].pseudo, msg.text);
-				players[i].sockfd = newsockfd;
-				i++;
+				/*ret = */ sread(newsockfd, &msg, sizeof(msg));
 
-				msg.code = INSCRIPTION_OK;
-				nbPLayers++;
-				if (nbPLayers == MAX_PLAYERS)
+				if (msg.code == INSCRIPTION_REQUEST)
 				{
-					alarm(0);
-					end_inscriptions = 1;
+					printf("Inscription demandée par le joueur : %s\n", msg.text);
+
+					strcpy(players[i].pseudo, msg.text);
+					players[i].sockfd = newsockfd;
+					i++;
+
+					msg.code = INSCRIPTION_OK;
+					nbPLayers++;
+					/*ret = */ swrite(newsockfd, &msg, sizeof(msg));
+					printf("Nb Inscriptions : %i\n", nbPLayers);
 				}
-				/*ret = */ swrite(newsockfd, &msg, sizeof(msg));
-				printf("Nb Inscriptions : %i\n", nbPLayers);
 			}
 		}
+		if (nbPLayers < 2)
+			printf("Temps d'inscription écoulé, redémarrage du serveur.\n");
 	}
 }
