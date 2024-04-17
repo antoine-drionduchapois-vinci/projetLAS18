@@ -15,6 +15,7 @@
 #define SCORE 16
 #define RANKING 17
 
+
 typedef struct
 {
   int code;

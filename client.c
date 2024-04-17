@@ -46,5 +46,39 @@ int main(int argc, char const *argv[])
 		break;
 	}
 
-	printf("%ld\n", sread(sockfd, &msg, sizeof(msg)));
+	// Client Game
+		while (msg.code == TILE){
+		// Read Tile
+		sread(sockfd, &msg, sizeof(msg));
+		printf("TILE : %s\n", sockfd.value);
+		// Place tile
+
+		// Send "Played" to server
+		msg.code = PLAYED;
+		msg.value = NULL;
+		msg.text = NULL
+		swrite(sockfd, &msg, sizeof(msg));
+		// Wait for new tile
+	}
+
+	// User input score
+	char* score;
+	printf("Write your score : \n");
+	scanf("%s", &score);
+
+	// Send Score to server
+	msg.code = SCORE;
+	msg.value = score;
+	msg.text = NULL;
+	swrite(sockfd, &msg, sizeof(msg));
+
+	// READ RANKING
+	sread(sockfd, &msg, sizeof(msg));
+	printf("Ranking : %s", msg.value);
+
+
+	// Game finished
+		// Close socketFD
+		sclose(sockfd);
+
 }
