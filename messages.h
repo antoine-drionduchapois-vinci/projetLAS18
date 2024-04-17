@@ -1,18 +1,19 @@
 #ifndef _MESSAGES_H_
 #define _MESSAGES_H_
 
-#define SERVER_IP "127.0.0.1"
 #define MAX_CHAR 256
 
-// TODO: use enum
-#define INSCRIPTION_REQUEST 10
-#define INSCRIPTION_OK 11
-#define TILE 12
-#define PLAYED 13
-#define CANCEL_GAME 14
-#define END_GAME 15
-#define SCORE 16
-#define RANKING 17
+typedef enum
+{
+  INSCRIPTION_REQUEST,
+  INSCRIPTION_OK,
+  TILE,
+  PLAYED,
+  CANCEL_GAME,
+  END_GAME,
+  SCORE,
+  RANKING
+} Code;
 
 typedef struct
 {

@@ -1,6 +1,8 @@
 #ifndef _NETWORK_H_
 #define _NETWORK_H_
 
+#define SERVER_IP "127.0.0.1"
+
 /**
  * PRE: serverIP : a valid IP address
  *      serverPort: a valid port number

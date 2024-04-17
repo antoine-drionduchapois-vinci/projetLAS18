@@ -9,7 +9,6 @@
 #include "network.h"
 
 #define MAX_PLAYERS 2
-#define BACKLOG 5
 #define TIME_INSCRIPTION 15
 
 typedef struct Player
@@ -96,7 +95,7 @@ int main(int argc, char const *argv[])
 		for (int i = 0; i < nbPLayers; i++)
 		{
 			swrite(players[i].sockfd, &msg, sizeof(msg));
-			close(players[i].sockfd);
+			sclose(players[i].sockfd);
 		}
 		printf("Temps de connexion écoulé !\n");
 	}
