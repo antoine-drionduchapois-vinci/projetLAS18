@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
 #include "messages.h"
 #include "utils_v1.h"
+#include "network.h"
 
 #define MAX_PLAYERS 2
 #define BACKLOG 5
@@ -22,8 +22,6 @@ typedef struct Player
 Player players[MAX_PLAYERS];
 volatile sig_atomic_t end_inscriptions = 0;
 
-
-
 void restartInscriptions(int sig)
 {
 	end_inscriptions = 1;
@@ -31,12 +29,12 @@ void restartInscriptions(int sig)
 
 void run_child(void *arg)
 {
-    int *pipefd = (int *)arg;
-    // Close the write end of the pipe in the child process
-    sclose(pipefd[1]);
+	int *pipefd = (int *)arg;
+	// Close the write end of the pipe in the child process
+	sclose(pipefd[1]);
 
-    // Process client communication and handle player actions
-    // Use pipefd[0] for communication with the parent process
+	// Process client communication and handle player actions
+	// Use pipefd[0] for communication with the parent process
 }
 
 int main(int argc, char const *argv[])
@@ -85,22 +83,22 @@ int main(int argc, char const *argv[])
 		}
 	}
 	// Create a pipe and a child process for each player
-    int pipefd[MAX_PLAYERS][2];
-    pid_t pid[MAX_PLAYERS];
+	int pipefd[MAX_PLAYERS][2];
+	pid_t pid[MAX_PLAYERS];
 
-    for (i = 0; i < MAX_PLAYERS; i++)
-    {
-        spipe(pipefd[i]);
+	for (i = 0; i < MAX_PLAYERS; i++)
+	{
+		spipe(pipefd[i]);
 
-        pid[i] = fork_and_run1(run_child, pipefd[i]);
+		pid[i] = fork_and_run1(run_child, pipefd[i]);
 
-        if (pid[i] < 0)
-        {
-            perror("Fork error");
-            exit(EXIT_FAILURE);
-        }
+		if (pid[i] < 0)
+		{
+			perror("Fork error");
+			exit(EXIT_FAILURE);
+		}
 
-        // Close the read end of the pipe in the parent process
-        sclose(pipefd[i][0]);
-    }
+		// Close the read end of the pipe in the parent process
+		sclose(pipefd[i][0]);
+	}
 }

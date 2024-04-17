@@ -3,20 +3,23 @@ CCFLAGS=-D_DEFAULT_SOURCE -D_XOPEN_SOURCE -D_BSD_SOURCE -std=c11 -pedantic -Wvla
 
 all: server client 
 
-server : server.o utils_v1.o
-	$(CC) $(CCFLAGS) -o server server.o utils_v1.o
+server : server.o utils_v1.o network.o
+	$(CC) $(CCFLAGS) -o server server.o utils_v1.o network.o
 
-client : client.o utils_v1.o
-	$(CC) $(CCFLAGS) -o client client.o utils_v1.o
+client : client.o utils_v1.o network.o
+	$(CC) $(CCFLAGS) -o client client.o utils_v1.o network.o
 
-server.o: server.c utils_v1.h messages.h
+server.o: server.c utils_v1.h messages.h network.h
 	$(CC) $(CCFLAGS) -c server.c 
 
-client.o: client.c utils_v1.h messages.h
+client.o: client.c utils_v1.h messages.h network.h
 	$(CC) $(CCFLAGS) -c client.c
 
 utils_v1.o: utils_v1.c utils_v1.h
 	$(CC) $(CCFLAGS) -c utils_v1.c 
+
+network.o: network.c network.h
+	$(CC) $(CCFLAGS) -c network.c 
 
 clear :
 		clear

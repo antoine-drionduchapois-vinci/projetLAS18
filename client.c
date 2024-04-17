@@ -10,8 +10,7 @@
 
 #include "messages.h"
 #include "utils_v1.h"
-
-
+#include "network.h"
 
 int main(int argc, char const *argv[])
 {
@@ -47,38 +46,34 @@ int main(int argc, char const *argv[])
 	}
 
 	// Client Game
-		while (msg.code == TILE){
+	while (msg.code == TILE)
+	{
 		// Read Tile
 		sread(sockfd, &msg, sizeof(msg));
-		printf("TILE : %s\n", sockfd.value);
+		printf("TILE : %d\n", msg.value);
 		// Place tile
 
 		// Send "Played" to server
 		msg.code = PLAYED;
-		msg.value = NULL;
-		msg.text = NULL
+		msg.value = -1;
+		strcpy(msg.text, "");
 		swrite(sockfd, &msg, sizeof(msg));
 		// Wait for new tile
 	}
 
-	// User input score
-	char* score;
-	printf("Write your score : \n");
-	scanf("%s", &score);
+	// TODO: calculate score
 
 	// Send Score to server
 	msg.code = SCORE;
-	msg.value = score;
-	msg.text = NULL;
+	msg.value = 0; // TODO: set score
+	strcpy(msg.text, "");
 	swrite(sockfd, &msg, sizeof(msg));
 
 	// READ RANKING
 	sread(sockfd, &msg, sizeof(msg));
-	printf("Ranking : %s", msg.value);
-
+	printf("Ranking : %d", msg.value);
 
 	// Game finished
-		// Close socketFD
-		sclose(sockfd);
-
+	// Close socketFD
+	sclose(sockfd);
 }
