@@ -46,10 +46,17 @@ int main(int argc, char const *argv[])
 	}
 
 	// Client Game
-	while (msg.code == TILE)
+	bool running = true;
+	while (running)
 	{
 		// Read Tile
 		sread(sockfd, &msg, sizeof(msg));
+		if (msg.code == CANCEL_GAME)
+		{
+			running = false;
+			printf("Partie annulée par le serveur!\n");
+			exit(0); // TODO
+		}
 		printf("TILE : %d\n", msg.value);
 		// Place tile
 
