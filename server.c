@@ -105,35 +105,41 @@ int main(int argc, char const *argv[])
 			continue;
 		}
 
-		// read "random" file
-		int filefd = sopen(FILE_NAME, O_RDONLY);
+		// read "random" file TODO: use utils
+		int filefd = open(FILE_NAME, O_RDONLY);
 		checkNeg(filefd, "Error opening file");
 
 		char bufRd[BUFFERSIZE];
+		sread(filefd, bufRd, BUFFERSIZE);
 
-		int nbCharRd = sread(filefd, bufRd, BUFFERSIZE);
-		while (nbCharRd > 0)
+		int tiles[20];
+		char *delim = "\n";
+		char *token;
+		int i = 0;
+
+		token = strtok(bufRd, delim);
+		while (token != NULL && i < 20)
 		{
-			int nbCharWr = write(1, bufRd, nbCharRd);
-			checkCond(nbCharWr != nbCharRd, "Error writing stdout");
-			nbCharRd = sread(filefd, bufRd, BUFFERSIZE);
+			tiles[i] = atoi(token);
+			token = strtok(NULL, delim);
+			i++;
 		}
 
-		// Create a pipe and a child process for each player
-		int pipefd[MAX_PLAYERS][2];
-		pid_t pid[MAX_PLAYERS];
+		// // Create a pipe and a child process for each player
+		// int pipefd[MAX_PLAYERS][2];
+		// pid_t pid[MAX_PLAYERS];
 
-		for (i = 0; i < MAX_PLAYERS; i++)
-		{
-			spipe(pipefd[i]);
+		// for (i = 0; i < MAX_PLAYERS; i++)
+		// {
+		// 	spipe(pipefd[i]);
 
-			pid[i] = fork_and_run1(run_child, pipefd[i]);
+		// 	pid[i] = fork_and_run1(run_child, pipefd[i]);
 
-			if (pid[i] < 0)
-			{
-				perror("Fork error");
-				exit(EXIT_FAILURE);
-			}
-		}
+		// 	if (pid[i] < 0)
+		// 	{
+		// 		perror("Fork error");
+		// 		exit(EXIT_FAILURE);
+		// 	}
+		// }
 	}
 }
