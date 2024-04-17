@@ -1,12 +1,6 @@
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 
 #include "messages.h"
 #include "utils_v1.h"
@@ -61,6 +55,7 @@ int main(int argc, char const *argv[])
 		{
 			running = false;
 			printf("Partie annulée par le serveur!\n");
+			sclose(sockfd);
 			exit(0); // TODO
 		}
 		printf("TILE : %d\n", msg.value);
