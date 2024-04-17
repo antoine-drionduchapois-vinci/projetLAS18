@@ -14,6 +14,11 @@
 
 int main(int argc, char const *argv[])
 {
+	if (argc < 2)
+	{
+		printf("Veuillez préciser le port en paramètres.\n");
+		exit(1);
+	}
 	int port = atoi(argv[1]);
 	char pseudo[MAX_CHAR];
 	int sockfd;

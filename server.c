@@ -39,6 +39,11 @@ void run_child(void *arg)
 
 int main(int argc, char const *argv[])
 {
+	if (argc < 2)
+	{
+		printf("Veuillez préciser le port en paramètres.\n");
+		exit(1);
+	}
 	int port = atoi(argv[1]);
 	int sockfd, newsockfd, i;
 	StructMessage msg;
