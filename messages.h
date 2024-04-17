@@ -17,7 +17,7 @@ typedef enum
 
 typedef struct
 {
-  int code;
+  Code code;
   char text[MAX_CHAR];
   int value;
 } StructMessage;
