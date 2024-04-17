@@ -55,6 +55,7 @@ int main(int argc, char const *argv[])
 		{
 			running = false;
 			printf("Partie annulée par le serveur!\n");
+			sclose(sockfd);
 			exit(0); // TODO
 		}
 		printf("TILE : %d\n", msg.value);
