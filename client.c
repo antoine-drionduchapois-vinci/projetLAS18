@@ -14,6 +14,12 @@
 
 int main(int argc, char const *argv[])
 {
+	if (argc < 2)
+	{
+		printf("Veuillez préciser le port en paramètres.\n");
+		exit(1);
+	}
+	int port = atoi(argv[1]);
 	char pseudo[MAX_CHAR];
 	int sockfd;
 	int ret;
@@ -29,7 +35,7 @@ int main(int argc, char const *argv[])
 	strcpy(msg.text, pseudo);
 	msg.code = INSCRIPTION_REQUEST;
 
-	sockfd = initSocketClient(SERVER_IP, SERVER_PORT);
+	sockfd = initSocketClient(SERVER_IP, port);
 
 	swrite(sockfd, &msg, sizeof(msg));
 

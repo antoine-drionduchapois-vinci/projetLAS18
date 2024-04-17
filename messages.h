@@ -1,7 +1,6 @@
 #ifndef _MESSAGES_H_
 #define _MESSAGES_H_
 
-#define SERVER_PORT 9502
 #define SERVER_IP "127.0.0.1"
 #define MAX_CHAR 256
 
@@ -14,7 +13,6 @@
 #define END_GAME 15
 #define SCORE 16
 #define RANKING 17
-
 
 typedef struct
 {

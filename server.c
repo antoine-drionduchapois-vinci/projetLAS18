@@ -39,14 +39,20 @@ void run_child(void *arg)
 
 int main(int argc, char const *argv[])
 {
+	if (argc < 2)
+	{
+		printf("Veuillez préciser le port en paramètres.\n");
+		exit(1);
+	}
+	int port = atoi(argv[1]);
 	int sockfd, newsockfd, i;
 	StructMessage msg;
 	// int ret;
 
 	ssigaction(SIGALRM, restartInscriptions);
 
-	sockfd = initSocketServer(SERVER_PORT);
-	printf("Le serveur tourne sur le port : %i \n", SERVER_PORT);
+	sockfd = initSocketServer(port);
+	printf("Le serveur tourne sur le port : %i \n", port);
 
 	while (true)
 	{
