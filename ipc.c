@@ -17,7 +17,7 @@ void createIpc() {
 void detachIpc() {
     // IPC destruction
     printf("Destroying IPCs...\n");
-    int shm_id = sshmget(RAKING_SHM_KEY, 2 * sizeof(int), 0);
+    int shm_id = sshmget(RAKING_SHM_KEY, MAX_PLAYERS * sizeof(int), 0);
     sshmdelete(shm_id);
   
     int sem_id = sem_get(RAKING_SEM_KEY, 2);
@@ -27,7 +27,7 @@ void detachIpc() {
 }
 
 int* getSharedMemory() {
-    int shid = sshmget(RAKING_SHM_KEY, 2 * sizeof(int), 0);
+    int shid = sshmget(RAKING_SHM_KEY, MAX_PLAYERS * sizeof(int), 0);
   
     int* memory = sshmat(shid);
    
