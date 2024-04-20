@@ -46,26 +46,24 @@ void run_child(void *arg, int *arg1)
         int player_sockfd = *arg1;
 
         // Game loop
-        while(msg.code != END_GAME){
-            // retrieve tile from parent
-            int tile;
-            sread(pipefd[0], &tile, sizeof(int));
+        while(true){
+            // retrieve tile from parent (pipe)
+            sread(pipefd[0], &msg, sizeof(msg));
 
-            // Setting up msg
-            msg.code = TILE;
-            msg.value = tile;
-            strcpy(msg.text, "");
-
-            // Send msg with tile to client
+            // stop loop if client sends END_GAME
+            if (msg.code == END_GAME){
+                break;
+            }
+            // Send msg with tile to client (socket)
             swrite(player_sockfd, &msg, sizeof(msg));
 
-            //Wait for code = PLAYED from client (sockfd)
+            // Wait for code = PLAYED from client (sockfd)
             sread(player_sockfd, &msg, sizeof(msg));
 
-            //Send code = PLAYED to parent (pipefd)
+            // Send code = PLAYED to parent (pipefd)
             sread(pipefd[1], &msg, sizeof(msg));
 
-            //Continue Loop as long as code != END_GAME
+            // Continue Loop as long as code != END_GAME
         }
 
         // Read Score
@@ -74,9 +72,12 @@ void run_child(void *arg, int *arg1)
         // Send Score to Parent
         swrite(pipefd[1], &msg, sizeof(msg));
 
+        // TODO : read ranking from shard memory
 
-	// Process client communication and handle player actions
-	// Use pipefd[0] for communication with the parent process
+        // TODO : Setting up msg with ranking
+
+        // Sends ranking to client
+        swrite(player_sockfd, &msg, sizeof(msg));
 }
 
 int main(int argc, char const *argv[])
