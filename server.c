@@ -26,6 +26,18 @@ void restartInscriptions(int sig)
 	end_inscriptions = 1;
 }
 
+// Signal to stop server
+void stopServer(int sig)
+{
+    if (!end_inscriptions) {
+        printf("Partie en cours, arrêt impossible.\n");
+    } else {
+        printf("Arrêt du serveur...\n");
+        // Clean up resources (sockets, child processes, etc.)
+        exit(0);
+    }
+}
+
 void run_child(void *arg)
 {
 	int *pipefd = (int *)arg;
@@ -49,6 +61,8 @@ int main(int argc, char const *argv[])
 	// int ret;
 
 	ssigaction(SIGALRM, restartInscriptions);
+
+    ssigaction(SIGUSR1, stopServer);
 
 	sockfd = initSocketServer(port);
 	printf("Le serveur tourne sur le port : %i \n", port);
