@@ -18,6 +18,7 @@ typedef struct Player
 	int score;
 } Player;
 
+StructMessage msg;
 Player players[MAX_PLAYERS];
 volatile sig_atomic_t end_inscriptions = 0;
 
@@ -38,11 +39,41 @@ void stopServer(int sig)
     }
 }
 
-void run_child(void *arg)
+void run_child(void *arg, int *arg1)
 {
-	int *pipefd = (int *)arg;
-	// Close the write end of the pipe in the child process
-	sclose(pipefd[1]);
+    // Retrieve pipe and socket
+        int *pipefd = (int *)arg;
+        int player_sockfd = *arg1;
+
+        // Game loop
+        while(msg.code != END_GAME){
+            // retrieve tile from parent
+            int tile;
+            sread(pipefd[0], &tile, sizeof(int));
+
+            // Setting up msg
+            msg.code = TILE;
+            msg.value = tile;
+            strcpy(msg.text, "");
+
+            // Send msg with tile to client
+            swrite(player_sockfd, &msg, sizeof(msg));
+
+            //Wait for code = PLAYED from client (sockfd)
+            sread(player_sockfd, &msg, sizeof(msg));
+
+            //Send code = PLAYED to parent (pipefd)
+            sread(pipefd[1], &msg, sizeof(msg));
+
+            //Continue Loop as long as code != END_GAME
+        }
+
+        // Read Score
+        sread(player_sockfd, &msg, sizeof(msg));
+
+        // Send Score to Parent
+        swrite(pipefd[1], &msg, sizeof(msg));
+
 
 	// Process client communication and handle player actions
 	// Use pipefd[0] for communication with the parent process
@@ -57,7 +88,7 @@ int main(int argc, char const *argv[])
 	}
 	int port = atoi(argv[1]);
 	int sockfd, newsockfd, i;
-	StructMessage msg;
+
 	// int ret;
 
 	ssigaction(SIGALRM, restartInscriptions);
@@ -120,8 +151,8 @@ int main(int argc, char const *argv[])
 	for (i = 0; i < MAX_PLAYERS; i++)
 	{
 		spipe(pipefd[i]);
-
-		pid[i] = fork_and_run1(run_child, pipefd[i]);
+        // Creating child process with it's pipe and socket
+		pid[i] = fork_and_run2(run_child, pipefd[i], players[i].sockfd);
 
 		if (pid[i] < 0)
 		{
