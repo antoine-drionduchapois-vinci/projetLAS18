@@ -22,6 +22,7 @@ typedef struct Player
 } Player;
 
 StructMessage msg;
+StructMessage msg;
 Player players[MAX_PLAYERS];
 volatile sig_atomic_t end_inscriptions = 0;
 
@@ -43,10 +44,21 @@ void stopServer(int sig)
 		// Clean up resources (sockets, child processes, etc.)
 		exit(0);
 	}
+	if (!end_inscriptions)
+	{
+		printf("Partie en cours, arrêt impossible.\n");
+	}
+	else
+	{
+		printf("Arrêt du serveur...\n");
+		// Clean up resources (sockets, child processes, etc.)
+		exit(0);
+	}
 }
 
-void run_child(void *arg, void *arg1)
+void run_child(void *arg, void *arg1) void run_child(void *arg, void *arg1)
 {
+	// Retrieve pipe and socket
 	// Retrieve pipe and socket
 	int *pipefd = (int *)arg;
 	int player_sockfd = *(int *)arg1;
@@ -99,6 +111,7 @@ int main(int argc, char const *argv[])
 
 	ssigaction(SIGALRM, restartInscriptions);
 
+	ssigaction(SIGUSR1, stopServer);
 	ssigaction(SIGUSR1, stopServer);
 
 	sockfd = initSocketServer(port);
