@@ -7,6 +7,7 @@
 #include "messages.h"
 #include "utils_v1.h"
 #include "network.h"
+#include "ipc.h"
 
 #define TIME_INSCRIPTION 15
 

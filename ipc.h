@@ -5,8 +5,8 @@
 
 #define PERM 0666
 
-#define RAKING_SHM_KEY 50
-#define RAKING_SEM_KEY 60
+#define RAKING_SHM_KEY 1
+#define RAKING_SEM_KEY 2
 
 void createIpc();
 

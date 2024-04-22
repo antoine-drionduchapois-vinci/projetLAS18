@@ -9,7 +9,7 @@
 void createIpc() {
     // Mémoire Partagée
     // IPC creation and initialization
-    sshmget(RAKING_SHM_KEY, 2 * sizeof(int), IPC_CREAT | IPC_EXCL | PERM);
+    sshmget(RAKING_SHM_KEY, MAX_PLAYERS * sizeof(int), IPC_CREAT | IPC_EXCL | PERM);
     sem_create(RAKING_SEM_KEY, 1, IPC_CREAT | IPC_EXCL | PERM, 1);   
     printf("IPCs created.\n");
 }
@@ -20,7 +20,7 @@ void detachIpc() {
     int shm_id = sshmget(RAKING_SHM_KEY, MAX_PLAYERS * sizeof(int), 0);
     sshmdelete(shm_id);
   
-    int sem_id = sem_get(RAKING_SEM_KEY, 2);
+    int sem_id = sem_get(RAKING_SEM_KEY, 1);
     sem_delete(sem_id);
 
     printf("IPCs freed.\n");
