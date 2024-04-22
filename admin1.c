@@ -28,13 +28,13 @@ int main (int argc, char *argv[]) {
   
   if (!strcmp(argv[1],"-c")) {
     // IPC creation and initialization
-    sshmget(RAKING_SHM_KEY, MAX_PLAYERS * sizeof(int), IPC_CREAT | IPC_EXCL | PERM);
+    sshmget(RAKING_SHM_KEY,SHARED_MEMORY_SIZE, IPC_CREAT | IPC_EXCL | PERM);
     sem_create(RAKING_SEM_KEY, 1, IPC_CREAT | IPC_EXCL | PERM, 1);   
     printf("IPCs created.\n");
   } else if (!strcmp(argv[1], "-d")) {
     // IPC destruction
     printf("Destroying IPCs...\n");
-    int shm_id = sshmget(RAKING_SHM_KEY, MAX_PLAYERS * sizeof(int), 0);
+    int shm_id = sshmget(RAKING_SHM_KEY, SHARED_MEMORY_SIZE, 0);
     sshmdelete(shm_id);
   
     int sem_id = sem_get(RAKING_SEM_KEY, 1);
