@@ -56,7 +56,7 @@ void stopServer(int sig)
 	}
 }
 
-void run_child(void *arg, void *arg1) void run_child(void *arg, void *arg1)
+void run_child(void *arg, void *arg1)
 {
 	// Retrieve pipe and socket
 	// Retrieve pipe and socket
@@ -187,6 +187,8 @@ int main(int argc, char const *argv[])
 			token = strtok(NULL, delim);
 			i++;
 		}
+
+		printf("%d", tiles[0]); // TODO: remove
 
 		// Create a pipe and a child process for each player
 		int pipefd[MAX_PLAYERS][2];
