@@ -30,54 +30,59 @@ void restartInscriptions(int sig)
 // Signal to stop server
 void stopServer(int sig)
 {
-    if (!end_inscriptions) {
-        printf("Partie en cours, arrêt impossible.\n");
-    } else {
-        printf("Arrêt du serveur...\n");
-        // Clean up resources (sockets, child processes, etc.)
-        exit(0);
-    }
+	if (!end_inscriptions)
+	{
+		printf("Partie en cours, arrêt impossible.\n");
+	}
+	else
+	{
+		printf("Arrêt du serveur...\n");
+		// Clean up resources (sockets, child processes, etc.)
+		exit(0);
+	}
 }
 
-void run_child(void *arg, int *arg1)
+void run_child(void *arg, void *arg1)
 {
-    // Retrieve pipe and socket
-        int *pipefd = (int *)arg;
-        int player_sockfd = *arg1;
+	// Retrieve pipe and socket
+	int *pipefd = (int *)arg;
+	int player_sockfd = *(int *)arg1;
 
-        // Game loop
-        while(true){
-            // retrieve tile from parent (pipe)
-            sread(pipefd[0], &msg, sizeof(msg));
+	// Game loop
+	while (true)
+	{
+		// retrieve tile from parent (pipe)
+		sread(pipefd[0], &msg, sizeof(msg));
 
-            // stop loop if client sends END_GAME
-            if (msg.code == END_GAME){
-                break;
-            }
-            // Send msg with tile to client (socket)
-            swrite(player_sockfd, &msg, sizeof(msg));
+		// stop loop if client sends END_GAME
+		if (msg.code == END_GAME)
+		{
+			break;
+		}
+		// Send msg with tile to client (socket)
+		swrite(player_sockfd, &msg, sizeof(msg));
 
-            // Wait for code = PLAYED from client (sockfd)
-            sread(player_sockfd, &msg, sizeof(msg));
+		// Wait for code = PLAYED from client (sockfd)
+		sread(player_sockfd, &msg, sizeof(msg));
 
-            // Send code = PLAYED to parent (pipefd)
-            sread(pipefd[1], &msg, sizeof(msg));
+		// Send code = PLAYED to parent (pipefd)
+		sread(pipefd[1], &msg, sizeof(msg));
 
-            // Continue Loop as long as code != END_GAME
-        }
+		// Continue Loop as long as code != END_GAME
+	}
 
-        // Read Score
-        sread(player_sockfd, &msg, sizeof(msg));
+	// Read Score
+	sread(player_sockfd, &msg, sizeof(msg));
 
-        // Send Score to Parent
-        swrite(pipefd[1], &msg, sizeof(msg));
+	// Send Score to Parent
+	swrite(pipefd[1], &msg, sizeof(msg));
 
-        // TODO : read ranking from shard memory
+	// TODO : read ranking from shard memory
 
-        // TODO : Setting up msg with ranking
+	// TODO : Setting up msg with ranking
 
-        // Sends ranking to client
-        swrite(player_sockfd, &msg, sizeof(msg));
+	// Sends ranking to client
+	swrite(player_sockfd, &msg, sizeof(msg));
 }
 
 int main(int argc, char const *argv[])
@@ -94,7 +99,7 @@ int main(int argc, char const *argv[])
 
 	ssigaction(SIGALRM, restartInscriptions);
 
-    ssigaction(SIGUSR1, stopServer);
+	ssigaction(SIGUSR1, stopServer);
 
 	sockfd = initSocketServer(port);
 	printf("Le serveur tourne sur le port : %i \n", port);
@@ -152,8 +157,8 @@ int main(int argc, char const *argv[])
 	for (i = 0; i < MAX_PLAYERS; i++)
 	{
 		spipe(pipefd[i]);
-        // Creating child process with it's pipe and socket
-		pid[i] = fork_and_run2(run_child, pipefd[i], players[i].sockfd);
+		// Creating child process with it's pipe and socket
+		pid[i] = fork_and_run2(run_child, pipefd[i], &players[i].sockfd);
 
 		if (pid[i] < 0)
 		{
