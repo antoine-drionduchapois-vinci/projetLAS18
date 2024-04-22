@@ -49,7 +49,7 @@ void run_child(void *arg, void *arg1)
 {
 	// Retrieve pipe and socket
 	int *pipefd = (int *)arg;
-	int player_sockfd = *arg1;
+	int player_sockfd = *(int *)arg1;
 
 	// Game loop
 	while (msg.code != END_GAME)
@@ -183,7 +183,7 @@ int main(int argc, char const *argv[])
 		{
 			spipe(pipefd[i]);
 			// Creating child process with it's pipe and socket
-			pid[i] = fork_and_run2(run_child, pipefd[i], players[i].sockfd);
+			pid[i] = fork_and_run2(run_child, pipefd[i], &players[i].sockfd);
 
 			if (pid[i] < 0)
 			{
