@@ -24,19 +24,27 @@ void restartInscriptions(int sig)
 	end_inscriptions = 1;
 }
 
+Player *trierTableau(Player *tableauPlayers, int sz)
+{
+	for (int i = 0; i < sz - 1; ++i)
+	{
+		for (int j = 0; j < sz - i - 1; ++j)
+		{
+
+			if (tableauPlayers[j + 1].score > tableauPlayers[j].score)
+			{
+				Player temp = tableauPlayers[j];
+				tableauPlayers[j] = tableauPlayers[j + 1];
+				tableauPlayers[j + 1] = temp;
+			}
+		}
+	}
+	return tableauPlayers;
+}
+
 // Signal to stop server
 void stopServer(int sig)
 {
-	if (!end_inscriptions)
-	{
-		printf("Partie en cours, arrêt impossible.\n");
-	}
-	else
-	{
-		printf("Arrêt du serveur...\n");
-		// Clean up resources (sockets, child processes, etc.)
-		exit(0);
-	}
 	if (!end_inscriptions)
 	{
 		printf("Partie en cours, arrêt impossible.\n");
@@ -104,7 +112,6 @@ int main(int argc, char const *argv[])
 
 	ssigaction(SIGALRM, restartInscriptions);
 
-	ssigaction(SIGUSR1, stopServer);
 	ssigaction(SIGUSR1, stopServer);
 
 	sockfd = initSocketServer(port);
