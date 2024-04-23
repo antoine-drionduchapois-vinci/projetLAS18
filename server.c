@@ -5,22 +5,17 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "messages.h"
 #include "utils_v1.h"
 #include "network.h"
+#include "game.h"
+#include "messages.h"
 
 #define MAX_PLAYERS 2
 #define TIME_INSCRIPTION 15
 #define FILE_NAME "random"
 #define BUFFERSIZE 60
 
-typedef struct Player
-{
-	char pseudo[MAX_CHAR];
-	int sockfd;
-	int score;
-} Player;
-
+StructMessage msg;
 Player players[MAX_PLAYERS];
 volatile sig_atomic_t end_inscriptions = 0;
 
@@ -61,10 +56,43 @@ void stopServer(int sig)
 		exit(0);
 	}
 }
-
-void run_child(void *arg)
+void run_child(void *arg, void *arg1)
 {
-	// int *pipefd = (int *)arg;
+	// Retrieve pipe and socket
+	int *pipefd = (int *)arg;
+	// int player_sockfd = *(int *)arg1;
+	StructMessage childPipeMessage;
+	StructMessage childSocMessage;
+	read(pipefd[1], &childPipeMessage, sizeof(childPipeMessage));
+
+	// Game loop
+	while (childPipeMessage.code == PIPE_TILE)
+	{
+		// Setting up msg
+		childSocMessage.code = TILE;
+		childSocMessage.value = childPipeMessage.value;
+		strcpy(childSocMessage.text, "");
+
+		// Send msg with tile to client
+		// swrite(player_sockfd, &childSocMessage, sizeof(childSocMessage));
+
+		// Wait for code = PLAYED from client (sockfd)
+		// sread(player_sockfd, &childSocMessage, sizeof(childSocMessage));
+
+		// Send code = PLAYED to parent (pipefd)
+		childPipeMessage.code = PIPE_PLAYED;
+		swrite(pipefd[1], &childPipeMessage, sizeof(childPipeMessage));
+
+		sread(pipefd[0], &childPipeMessage, sizeof(childPipeMessage));
+	}
+
+	// Read Score
+	// sread(player_sockfd, &childSocMessage, sizeof(childSocMessage));
+
+	// Send Score to Parent
+	// childPipeMessage.code = PIPE_SCORE;
+	// childPipeMessage.value = childSocMessage.value;
+	// swrite(pipefd[1], &childPipeMessage, sizeof(childPipeMessage));
 
 	// Process client communication and handle player actions
 	// Use pipefd[0] for communication with the parent process
@@ -79,7 +107,7 @@ int main(int argc, char const *argv[])
 	}
 	int port = atoi(argv[1]);
 	int sockfd, newsockfd, i;
-	StructMessage msg;
+
 	// int ret;
 
 	ssigaction(SIGALRM, restartInscriptions);
@@ -160,21 +188,23 @@ int main(int argc, char const *argv[])
 			i++;
 		}
 
-		// // Create a pipe and a child process for each player
-		// int pipefd[MAX_PLAYERS][2];
-		// pid_t pid[MAX_PLAYERS];
+		for (int i = 0; i < nbPLayers; i++)
+		{
+			spipe(players[i].pipefd);
+			// Creating child process with it's pipe and socket
+			players[i].pid = fork_and_run2(run_child, players[i].pipefd, &players[i].sockfd);
 
-		// for (i = 0; i < MAX_PLAYERS; i++)
-		// {
-		// 	spipe(pipefd[i]);
+			if (players[i].pid < 0)
+			{
+				perror("Fork error");
+				exit(EXIT_FAILURE);
+			}
+		}
 
-		// 	pid[i] = fork_and_run1(run_child, pipefd[i]);
-
-		// 	if (pid[i] < 0)
-		// 	{
-		// 		perror("Fork error");
-		// 		exit(EXIT_FAILURE);
-		// 	}
-		// }
+		for (int i = 0; i < 20; i++)
+		{
+			sendTile(players, nbPLayers, tiles[i]);
+			waitForPlayed(players, nbPLayers);
+		}
 	}
 }
