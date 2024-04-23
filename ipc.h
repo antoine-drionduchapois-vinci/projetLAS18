@@ -15,7 +15,7 @@ void createIpc();
 
 void detachIpc();
 
-int* getSharedMemory();
+PlayerIpc* getSharedMemory();
 
 typedef struct PlayerIpc
 {

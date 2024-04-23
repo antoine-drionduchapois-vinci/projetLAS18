@@ -27,10 +27,10 @@ void detachIpc() {
     printf("IPCs freed.\n");
 }
 
-int* getSharedMemory() {
+PlayerIpc* getSharedMemory() {
     int shid = sshmget(RAKING_SHM_KEY,SHARED_MEMORY_SIZE, 0);
   
-    int* memory = sshmat(shid);
+    PlayerIpc* memory = (PlayerIpc*)sshmat(shid);
    
     return memory;
 }
