@@ -3,21 +3,19 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <fcntl.h>
 
-#include "messages.h"
 #include "utils_v1.h"
 #include "network.h"
 #include "ipc.h"
+#include "game.h"
+#include "messages.h"
 
 #define TIME_INSCRIPTION 15
+#define FILE_NAME "random"
+#define BUFFERSIZE 60
 
-typedef struct Player
-{
-	char pseudo[MAX_CHAR];
-	int sockfd;
-	int score;
-} Player;
-
+StructMessage msg;
 Player players[MAX_PLAYERS];
 volatile sig_atomic_t end_inscriptions = 0;
 
@@ -26,11 +24,75 @@ void restartInscriptions(int sig)
 	end_inscriptions = 1;
 }
 
-void run_child(void *arg)
+Player *trierTableau(Player *tableauPlayers, int sz)
 {
+	for (int i = 0; i < sz - 1; ++i)
+	{
+		for (int j = 0; j < sz - i - 1; ++j)
+		{
+
+			if (tableauPlayers[j + 1].score > tableauPlayers[j].score)
+			{
+				Player temp = tableauPlayers[j];
+				tableauPlayers[j] = tableauPlayers[j + 1];
+				tableauPlayers[j + 1] = temp;
+			}
+		}
+	}
+	return tableauPlayers;
+}
+
+// Signal to stop server
+void stopServer(int sig)
+{
+	if (!end_inscriptions)
+	{
+		printf("Partie en cours, arrêt impossible.\n");
+	}
+	else
+	{
+		printf("Arrêt du serveur...\n");
+		// Clean up resources (sockets, child processes, etc.)
+		exit(0);
+	}
+}
+void run_child(void *arg, void *arg1)
+{
+	// Retrieve pipe and socket
 	int *pipefd = (int *)arg;
-	// Close the write end of the pipe in the child process
-	sclose(pipefd[1]);
+	// int player_sockfd = *(int *)arg1;
+	StructMessage childPipeMessage;
+	StructMessage childSocMessage;
+	read(pipefd[1], &childPipeMessage, sizeof(childPipeMessage));
+
+	// Game loop
+	while (childPipeMessage.code == PIPE_TILE)
+	{
+		// Setting up msg
+		childSocMessage.code = TILE;
+		childSocMessage.value = childPipeMessage.value;
+		strcpy(childSocMessage.text, "");
+
+		// Send msg with tile to client
+		// swrite(player_sockfd, &childSocMessage, sizeof(childSocMessage));
+
+		// Wait for code = PLAYED from client (sockfd)
+		// sread(player_sockfd, &childSocMessage, sizeof(childSocMessage));
+
+		// Send code = PLAYED to parent (pipefd)
+		childPipeMessage.code = PIPE_PLAYED;
+		swrite(pipefd[1], &childPipeMessage, sizeof(childPipeMessage));
+
+		sread(pipefd[0], &childPipeMessage, sizeof(childPipeMessage));
+	}
+
+	// Read Score
+	// sread(player_sockfd, &childSocMessage, sizeof(childSocMessage));
+
+	// Send Score to Parent
+	// childPipeMessage.code = PIPE_SCORE;
+	// childPipeMessage.value = childSocMessage.value;
+	// swrite(pipefd[1], &childPipeMessage, sizeof(childPipeMessage));
 
 	// Process client communication and handle player actions
 	// Use pipefd[0] for communication with the parent process
@@ -45,10 +107,12 @@ int main(int argc, char const *argv[])
 	}
 	int port = atoi(argv[1]);
 	int sockfd, newsockfd, i;
-	StructMessage msg;
+
 	// int ret;
 
 	ssigaction(SIGALRM, restartInscriptions);
+
+	ssigaction(SIGUSR1, stopServer);
 
 	sockfd = initSocketServer(port);
 	printf("Le serveur tourne sur le port : %i \n", port);
@@ -91,31 +155,56 @@ int main(int argc, char const *argv[])
 				}
 			}
 		}
-		msg.code = CANCEL_GAME;
+
+		if (nbPLayers < 2)
+		{
+			msg.code = CANCEL_GAME;
+			for (int i = 0; i < nbPLayers; i++)
+			{
+				swrite(players[i].sockfd, &msg, sizeof(msg));
+				sclose(players[i].sockfd);
+			}
+			printf("Temps de connexion écoulé !\n");
+			continue;
+		}
+
+		// read "random" file TODO: use utils
+		int filefd = open(FILE_NAME, O_RDONLY);
+		checkNeg(filefd, "Error opening file");
+
+		char bufRd[BUFFERSIZE];
+		sread(filefd, bufRd, BUFFERSIZE);
+
+		int tiles[20];
+		char *delim = "\n";
+		char *token;
+		int i = 0;
+
+		token = strtok(bufRd, delim);
+		while (token != NULL && i < 20)
+		{
+			tiles[i] = atoi(token);
+			token = strtok(NULL, delim);
+			i++;
+		}
+
 		for (int i = 0; i < nbPLayers; i++)
 		{
-			swrite(players[i].sockfd, &msg, sizeof(msg));
-			sclose(players[i].sockfd);
+			spipe(players[i].pipefd);
+			// Creating child process with it's pipe and socket
+			players[i].pid = fork_and_run2(run_child, players[i].pipefd, &players[i].sockfd);
+
+			if (players[i].pid < 0)
+			{
+				perror("Fork error");
+				exit(EXIT_FAILURE);
+			}
 		}
-		printf("Temps de connexion écoulé !\n");
-	}
-	// Create a pipe and a child process for each player
-	int pipefd[MAX_PLAYERS][2];
-	pid_t pid[MAX_PLAYERS];
 
-	for (i = 0; i < MAX_PLAYERS; i++)
-	{
-		spipe(pipefd[i]);
-
-		pid[i] = fork_and_run1(run_child, pipefd[i]);
-
-		if (pid[i] < 0)
+		for (int i = 0; i < 20; i++)
 		{
-			perror("Fork error");
-			exit(EXIT_FAILURE);
+			sendTile(players, nbPLayers, tiles[i]);
+			waitForPlayed(players, nbPLayers);
 		}
-
-		// Close the read end of the pipe in the parent process
-		sclose(pipefd[i][0]);
 	}
 }
