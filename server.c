@@ -24,6 +24,7 @@ void restartInscriptions(int sig)
 	end_inscriptions = 1;
 }
 
+
 Player *trierTableau(Player *tableauPlayers, int sz)
 {
 	for (int i = 0; i < sz - 1; ++i)
