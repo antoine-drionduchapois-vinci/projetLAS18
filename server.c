@@ -24,6 +24,8 @@ void restartInscriptions(int sig)
 	end_inscriptions = 1;
 }
 
+//create dummy table of players
+
 
 Player *trierTableau(Player *tableauPlayers, int sz)
 {
