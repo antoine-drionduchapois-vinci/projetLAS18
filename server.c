@@ -24,6 +24,42 @@ void restartInscriptions(int sig)
 	end_inscriptions = 1;
 }
 
+// Create dummy player data
+	Player* createTable() {
+    Player p1, p2, p3, p4;
+
+    strcpy(p1.pseudo, "Antoine");
+    p1.score = 10;
+    p1.sockfd = 123;
+
+    strcpy(p2.pseudo, "Josué");
+    p2.score = 100;
+    p2.sockfd = 475;
+
+    strcpy(p3.pseudo, "Diégo");
+    p3.score = 150;
+    p3.sockfd = 875;
+
+    strcpy(p4.pseudo, "Choquet");
+    p4.score = 300;
+    p4.sockfd = 368;
+
+    Player* tabPlayer = malloc(4 * sizeof(Player)); // Allocate memory for 4 Player structures
+
+    if (tabPlayer == NULL) {
+        // Handle allocation failure
+        return NULL;
+    }
+
+    tabPlayer[0] = p1;
+    tabPlayer[1] = p2;
+    tabPlayer[2] = p3;
+    tabPlayer[3] = p4;
+
+    return tabPlayer;
+}
+
+
 Player *trierTableau(Player *tableauPlayers, int sz)
 {
 	for (int i = 0; i < sz - 1; ++i)
@@ -96,11 +132,14 @@ void run_child(void *arg, void *arg1)
 	// childPipeMessage.value = childSocMessage.value;
 	// swrite(pipefd[1], &childPipeMessage, sizeof(childPipeMessage));
 
-	
+		// Read ranking from shared memory
 
-	// Process client communication and handle player actions
-	// Use pipefd[0] for communication with the parent process
-
+		// send ranking to client
+		Player* rankingTable = createTable(); // -> A remplacer avec getSharedMemory()
+		childSocMessage.code = RANKING;
+		childSocMessage.value = rankingTable;
+		childSocMessage.text = "";
+		swrite(player_sockfd, &childSocMessage, sizeof(childSocMessage));
 
 		// Once finished, close pipe and sockfd
 		close(pipefd[0]);
