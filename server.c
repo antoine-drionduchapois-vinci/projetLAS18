@@ -7,10 +7,10 @@
 
 #include "utils_v1.h"
 #include "network.h"
+#include "ipc.h"
 #include "game.h"
 #include "messages.h"
 
-#define MAX_PLAYERS 2
 #define TIME_INSCRIPTION 15
 #define FILE_NAME "random"
 #define BUFFERSIZE 60
