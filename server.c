@@ -5,34 +5,15 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "messages.h"
 #include "utils_v1.h"
 #include "network.h"
+#include "game.h"
+#include "messages.h"
 
 #define MAX_PLAYERS 2
 #define TIME_INSCRIPTION 15
 #define FILE_NAME "random"
 #define BUFFERSIZE 60
-
-// pipe message codes
-#define PIPE_TILE 10
-#define PIPE_PLAYED 11
-#define PIPE_SCORE 12
-
-typedef struct Player
-{
-	char pseudo[MAX_CHAR];
-	int sockfd;
-	int pipefd[2];
-	int pid;
-	int score;
-} Player;
-
-typedef struct
-{
-	int code;
-	int value;
-} PipeMessage;
 
 StructMessage msg;
 Player players[MAX_PLAYERS];
@@ -67,13 +48,12 @@ void stopServer(int sig)
 		exit(0);
 	}
 }
-
 void run_child(void *arg, void *arg1)
 {
 	// Retrieve pipe and socket
 	int *pipefd = (int *)arg;
-	int player_sockfd = *(int *)arg1;
-	PipeMessage childPipeMessage;
+	// int player_sockfd = *(int *)arg1;
+	StructMessage childPipeMessage;
 	StructMessage childSocMessage;
 	read(pipefd[1], &childPipeMessage, sizeof(childPipeMessage));
 
@@ -86,10 +66,10 @@ void run_child(void *arg, void *arg1)
 		strcpy(childSocMessage.text, "");
 
 		// Send msg with tile to client
-		swrite(player_sockfd, &childSocMessage, sizeof(childSocMessage));
+		// swrite(player_sockfd, &childSocMessage, sizeof(childSocMessage));
 
 		// Wait for code = PLAYED from client (sockfd)
-		sread(player_sockfd, &childSocMessage, sizeof(childSocMessage));
+		// sread(player_sockfd, &childSocMessage, sizeof(childSocMessage));
 
 		// Send code = PLAYED to parent (pipefd)
 		childPipeMessage.code = PIPE_PLAYED;
@@ -99,12 +79,12 @@ void run_child(void *arg, void *arg1)
 	}
 
 	// Read Score
-	sread(player_sockfd, &childSocMessage, sizeof(childSocMessage));
+	// sread(player_sockfd, &childSocMessage, sizeof(childSocMessage));
 
 	// Send Score to Parent
-	childPipeMessage.code = PIPE_SCORE;
-	childPipeMessage.value = childSocMessage.value;
-	swrite(pipefd[1], &childPipeMessage, sizeof(childPipeMessage));
+	// childPipeMessage.code = PIPE_SCORE;
+	// childPipeMessage.value = childSocMessage.value;
+	// swrite(pipefd[1], &childPipeMessage, sizeof(childPipeMessage));
 
 	// Process client communication and handle player actions
 	// Use pipefd[0] for communication with the parent process
@@ -201,8 +181,6 @@ int main(int argc, char const *argv[])
 			i++;
 		}
 
-		printf("%d\n", tiles[0]); // TODO: remove
-
 		for (int i = 0; i < nbPLayers; i++)
 		{
 			spipe(players[i].pipefd);
@@ -216,19 +194,10 @@ int main(int argc, char const *argv[])
 			}
 		}
 
-		PipeMessage pipeMessage;
-		pipeMessage.code = PIPE_TILE;
-		pipeMessage.value = 1;
-
-		for (int i = 0; i < nbPLayers; i++)
+		for (int i = 0; i < 20; i++)
 		{
-			swrite(players[i].pipefd[1], &pipeMessage, sizeof(pipeMessage));
-		}
-
-		for (int i = 0; i < nbPLayers; i++)
-		{
-			sread(players[i].pipefd[0], &pipeMessage, sizeof(pipeMessage));
-			printf("Joueur %d a joué\n", pipeMessage.code);
+			sendTile(players, nbPLayers, tiles[i]);
+			waitForPlayed(players, nbPLayers);
 		}
 	}
 }

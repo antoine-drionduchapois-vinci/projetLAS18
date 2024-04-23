@@ -12,7 +12,10 @@ typedef enum
   CANCEL_GAME,
   END_GAME,
   SCORE,
-  RANKING
+  RANKING,
+  PIPE_TILE,
+  PIPE_PLAYED,
+  PIPE_SCORE,
 } Code;
 
 typedef struct
