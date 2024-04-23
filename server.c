@@ -86,11 +86,7 @@ void run_child(void *arg, void *arg1)
 
 		sread(pipefd[0], &childPipeMessage, sizeof(childPipeMessage));
 
-		// Once finished, close pipe and sockfd
-		close(pipefd[0]);
-		close(pipefd[1]);
-		close(player_sockfd);
-		exit(0);
+	
 	}
 
 	// Read Score
@@ -105,6 +101,13 @@ void run_child(void *arg, void *arg1)
 
 	// Process client communication and handle player actions
 	// Use pipefd[0] for communication with the parent process
+
+
+		// Once finished, close pipe and sockfd
+		close(pipefd[0]);
+		close(pipefd[1]);
+		close(player_sockfd);
+		exit(0);
 
 }
 
