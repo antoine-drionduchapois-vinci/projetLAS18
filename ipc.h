@@ -9,14 +9,6 @@
 #define RAKING_SEM_KEY 2
 
 #define SHARED_MEMORY_SIZE (MAX_PLAYERS * sizeof(PlayerIpc))
-
-
-void createIpc();
-
-void detachIpc();
-
-PlayerIpc* getSharedMemory();
-
 typedef struct PlayerIpc
 {
 	int sockfd;
@@ -24,3 +16,9 @@ typedef struct PlayerIpc
 } PlayerIpc;
 
 #endif
+
+void createIpc();
+
+void detachIpc();
+
+PlayerIpc *getSharedMemory();
