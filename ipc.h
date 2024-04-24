@@ -10,9 +10,10 @@
 #define RAKING_SEM_KEY 2
 
 #define SHARED_MEMORY_SIZE (MAX_PLAYERS * sizeof(PlayerIpc))
+
 typedef struct PlayerIpc
 {
-	int sockfd;
+	char pseudo[MAX];
 	int score;
 } PlayerIpc;
 
