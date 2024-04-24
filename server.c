@@ -64,9 +64,10 @@ void run_child(void *arg, void *arg1, void *arg2)
 	int *childToParent = (int *)arg1;
 	sclose(parentToChild[1]);
 	sclose(childToParent[0]);
-	int player_sockfd = *(int *)arg1;
+	int player_sockfd = *(int *)arg2;
 
 	StructMessage childPipeMessage;
+	StructMessage socketMessage;
 
 	sread(parentToChild[0], &childPipeMessage, sizeof(childPipeMessage));
 
@@ -74,9 +75,23 @@ void run_child(void *arg, void *arg1, void *arg2)
 	{
 		printf("child %d got tile : %d\n", getpid(), childPipeMessage.value);
 
+		// Setup socket message
+		socketMessage.code = TILE;
+		socketMessage.value = childPipeMessage.value;
+
+		// Send tile to client
+		swrite(player_sockfd, &socketMessage, sizeof(socketMessage));
+
+		// Wait for client response
+		sread(player_sockfd, &socketMessage, sizeof(socketMessage));
+
+		// Setup pipe message
 		childPipeMessage.code = PIPE_PLAYED;
+
+		// Send pipe message to parent
 		swrite(childToParent[1], &childPipeMessage, sizeof(childPipeMessage));
 
+		// Wait for parent message
 		sread(parentToChild[0], &childPipeMessage, sizeof(childPipeMessage));
 	}
 

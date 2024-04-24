@@ -6,6 +6,33 @@
 #include "utils_v1.h"
 #include "network.h"
 
+void placeTile(int stream[20], int tile, int index)
+{
+	int i = index;
+	while (stream[i] != 0)
+	{
+		if (i == 19)
+			i = 0;
+		else
+			i++;
+	}
+	stream[i] = tile;
+}
+
+void printStream(int stream[20])
+{
+	for (int i = 0; i < 20; i++)
+	{
+		printf("%3d|", i + 1);
+	}
+	printf("\n");
+	for (int i = 0; i < 20; i++)
+	{
+		printf("%3d|", stream[i]);
+	}
+	printf("\n");
+}
+
 int main(int argc, char const *argv[])
 {
 	if (argc < 2)
@@ -19,7 +46,6 @@ int main(int argc, char const *argv[])
 	int ret;
 
 	StructMessage msg;
-	// char inputBuffer[3];
 
 	printf("Bienvenue dans le programe d'inscription au serveur de jeu\n");
 	printf("Pour participer entrez votre nom :\n");
@@ -46,40 +72,43 @@ int main(int argc, char const *argv[])
 	}
 
 	// Client Game
-	bool running = true;
-	while (running)
+	int stream[20] = {0};
+	sread(sockfd, &msg, sizeof(msg));
+
+	while (msg.code == TILE)
 	{
-		// Read Tile
-		sread(sockfd, &msg, sizeof(msg));
-		if (msg.code == CANCEL_GAME)
-		{
-			running = false;
-			printf("Partie annulée par le serveur!\n");
-			sclose(sockfd);
-			exit(0); // TODO
-		}
-		printf("TILE : %d\n", msg.value);
+		printf("Placer la tuile '%d' : ", msg.value);
+
 		// Place tile
+		placeTile(stream, msg.value, atoi(readLine()) - 1);
+		printStream(stream);
 
 		// Send "Played" to server
 		msg.code = PLAYED;
-		msg.value = -1;
-		strcpy(msg.text, "");
 		swrite(sockfd, &msg, sizeof(msg));
+
 		// Wait for new tile
+		sread(sockfd, &msg, sizeof(msg));
+	}
+
+	if (msg.code == CANCEL_GAME)
+	{
+		printf("Partie annulée par le serveur!\n");
+		sclose(sockfd);
+		exit(EXIT_SUCCESS); // TODO
 	}
 
 	// TODO: calculate score
 
 	// Send Score to server
-	msg.code = SCORE;
-	msg.value = 0; // TODO: set score
-	strcpy(msg.text, "");
-	swrite(sockfd, &msg, sizeof(msg));
+	// msg.code = SCORE;
+	// msg.value = 0; // TODO: set score
+	// strcpy(msg.text, "");
+	// swrite(sockfd, &msg, sizeof(msg));
 
 	// READ RANKING
-	sread(sockfd, &msg, sizeof(msg));
-	printf("Ranking : %d", msg.value);
+	// sread(sockfd, &msg, sizeof(msg));
+	// printf("Ranking : %d", msg.value);
 
 	// Game finished
 	// Close socketFD
