@@ -17,6 +17,7 @@
 
 StructMessage msg;
 Player players[MAX_PLAYERS];
+PlayerIpc ranking[MAX_PLAYERS];
 volatile sig_atomic_t end_inscriptions = 0;
 
 void restartInscriptions(int sig)
@@ -103,8 +104,20 @@ int main(int argc, char const *argv[])
 	sockfd = initSocketServer(port);
 	printf("Le serveur tourne sur le port : %i \n", port);
 
+	createIpc();
+
 	while (true)
 	{
+		int sid = sem_get(RAKING_SEM_KEY, 1);
+  		sem_down0(sid);
+		PlayerIpc* memory = getSharedMemory();
+		// Initialisation de la mémoire partagée avec un tableau vide
+		for (int i = 0; i < MAX_PLAYERS; i++) {
+			strcpy(memory[i].pseudo, "");
+			memory[i].score = 0;
+		}
+
+
 		printf("Début des inscriptions :\n");
 		end_inscriptions = 0;
 		alarm(TIME_INSCRIPTION);
@@ -198,6 +211,11 @@ int main(int argc, char const *argv[])
 			sendTile(players, nbPLayers, tiles[i]);
 			waitForPlayed(players, nbPLayers);
 		}
+		endGame(players,nbPLayers);
+		waitForScore(players, nbPLayers,ranking);
+
+		
+
 
 		swait(0);
 	}
