@@ -57,58 +57,32 @@ void stopServer(int sig)
 		exit(0);
 	}
 }
-void run_child(void *arg, void *arg1)
-{
-	// Retrieve pipe and socket
-	int *pipefd = (int *)arg;
-	// int player_sockfd = *(int *)arg1;
-	StructMessage childPipeMessage;
-	StructMessage childSocMessage;
-	read(pipefd[1], &childPipeMessage, sizeof(childPipeMessage));
 
-	// Game loop
+void run_child(void *arg, void *arg1, void *arg2)
+{
+	int *parentToChild = (int *)arg;
+	int *childToParent = (int *)arg1;
+	sclose(parentToChild[1]);
+	sclose(childToParent[0]);
+	int player_sockfd = *(int *)arg1;
+
+	StructMessage childPipeMessage;
+
+	sread(parentToChild[0], &childPipeMessage, sizeof(childPipeMessage));
+
 	while (childPipeMessage.code == PIPE_TILE)
 	{
-		// Setting up msg
-		childSocMessage.code = TILE;
-		childSocMessage.value = childPipeMessage.value;
-		strcpy(childSocMessage.text, "");
+		printf("child %d got tile : %d\n", getpid(), childPipeMessage.value);
 
-		// Send msg with tile to client
-		// swrite(player_sockfd, &childSocMessage, sizeof(childSocMessage));
-
-		// Wait for code = PLAYED from client (sockfd)
-		// sread(player_sockfd, &childSocMessage, sizeof(childSocMessage));
-
-		// Send code = PLAYED to parent (pipefd)
 		childPipeMessage.code = PIPE_PLAYED;
-		swrite(pipefd[1], &childPipeMessage, sizeof(childPipeMessage));
+		swrite(childToParent[1], &childPipeMessage, sizeof(childPipeMessage));
 
-		sread(pipefd[0], &childPipeMessage, sizeof(childPipeMessage));
-
-	
+		sread(parentToChild[0], &childPipeMessage, sizeof(childPipeMessage));
 	}
 
-	// Read Score
-	// sread(player_sockfd, &childSocMessage, sizeof(childSocMessage));
+	printf("child exit");
 
-	// Send Score to Parent
-	// childPipeMessage.code = PIPE_SCORE;
-	// childPipeMessage.value = childSocMessage.value;
-	// swrite(pipefd[1], &childPipeMessage, sizeof(childPipeMessage));
-
-	
-
-	// Process client communication and handle player actions
-	// Use pipefd[0] for communication with the parent process
-
-
-		// Once finished, close pipe and sockfd
-		close(pipefd[0]);
-		close(pipefd[1]);
-		close(player_sockfd);
-		exit(0);
-
+	exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char const *argv[])
@@ -213,17 +187,23 @@ int main(int argc, char const *argv[])
 			i++;
 		}
 
+		printf("%d\n", tiles[0]);
+
 		for (int i = 0; i < nbPLayers; i++)
 		{
-			spipe(players[i].pipefd);
+			spipe(players[i].parentToChild);
+			spipe(players[i].childToParent);
 			// Creating child process with it's pipe and socket
-			players[i].pid = fork_and_run2(run_child, players[i].pipefd, &players[i].sockfd);
+			players[i].pid = fork_and_run3(run_child, players[i].parentToChild, players[i].childToParent, &players[i].sockfd);
 
 			if (players[i].pid < 0)
 			{
 				perror("Fork error");
 				exit(EXIT_FAILURE);
 			}
+
+			sclose(players[i].parentToChild[0]);
+			sclose(players[i].childToParent[1]);
 		}
 
 		for (int i = 0; i < 20; i++)
@@ -236,5 +216,7 @@ int main(int argc, char const *argv[])
 
 		
 
+
+		swait(0);
 	}
 }
