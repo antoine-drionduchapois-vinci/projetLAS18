@@ -25,23 +25,22 @@ void restartInscriptions(int sig)
 	end_inscriptions = 1;
 }
 
-Player *trierTableau(Player *tableauPlayers, int sz)
+void trierTableau(PlayerIpc *tableauPlayers, int sz)
 {
-	for (int i = 0; i < sz - 1; ++i)
-	{
-		for (int j = 0; j < sz - i - 1; ++j)
-		{
-
-			if (tableauPlayers[j + 1].score > tableauPlayers[j].score)
-			{
-				Player temp = tableauPlayers[j];
-				tableauPlayers[j] = tableauPlayers[j + 1];
-				tableauPlayers[j + 1] = temp;
-			}
-		}
-	}
-	return tableauPlayers;
+    for (int i = 0; i < sz - 1; ++i)
+    {
+        for (int j = 0; j < sz - i - 1; ++j)
+        {
+            if (tableauPlayers[j + 1].score > tableauPlayers[j].score)
+            {
+                PlayerIpc temp = tableauPlayers[j];
+                tableauPlayers[j] = tableauPlayers[j + 1];
+                tableauPlayers[j + 1] = temp;
+            }
+        }
+    }
 }
+
 
 // Signal to stop server
 void stopServer(int sig)
@@ -62,12 +61,14 @@ void run_child(void *arg, void *arg1, void *arg2)
 {
 	int *parentToChild = (int *)arg;
 	int *childToParent = (int *)arg1;
+	int sid = sem_get(RAKING_SEM_KEY, 1);
 	sclose(parentToChild[1]);
 	sclose(childToParent[0]);
 	int player_sockfd = *(int *)arg2;
 
 	StructMessage childPipeMessage;
 	StructMessage socketMessage;
+	
 
 	sread(parentToChild[0], &childPipeMessage, sizeof(childPipeMessage));
 
@@ -94,6 +95,24 @@ void run_child(void *arg, void *arg1, void *arg2)
 		// Wait for parent message
 		sread(parentToChild[0], &childPipeMessage, sizeof(childPipeMessage));
 	}
+	if (childPipeMessage.code == PIPE_END_GAME)
+	{
+		//send end game to client
+		socketMessage.code = END_GAME;
+		swrite(player_sockfd, &socketMessage, sizeof(socketMessage));
+		//get score client
+		sread(player_sockfd, &socketMessage, sizeof(socketMessage));
+		//send score to parent
+		childPipeMessage.code = PIPE_SCORE;		
+		childPipeMessage.value = socketMessage.value;
+		swrite(childToParent[1], &childPipeMessage, sizeof(childPipeMessage));
+		//get shared memory
+		sem_down0(sid);
+		PlayerIpc *childRanking = getSharedMemory();
+		swrite(player_sockfd, childRanking, MAX_PLAYERS * sizeof(PlayerIpc));
+		sem_up0(sid);
+	}
+	
 
 	printf("child exit");
 
@@ -229,8 +248,13 @@ int main(int argc, char const *argv[])
 		endGame(players,nbPLayers);
 		waitForScore(players, nbPLayers,ranking);
 
-		
+		trierTableau(ranking,nbPLayers);
+		for (int i = 0; i < MAX_PLAYERS; i++) {
+			strcpy(memory[i].pseudo, ranking[i].pseudo);
+			memory[i].score = ranking[i].score;
+		}
 
+		sem_up0(sid);
 
 		swait(0);
 	}

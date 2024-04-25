@@ -11,11 +11,12 @@ typedef enum
   PLAYED,
   CANCEL_GAME,
   END_GAME,
+  PIPE_END_GAME,
+  PIPE_SCORE,
   SCORE,
   RANKING,
   PIPE_TILE,
   PIPE_PLAYED,
-  PIPE_SCORE,
 } Code;
 
 typedef struct
