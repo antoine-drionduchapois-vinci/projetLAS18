@@ -33,6 +33,31 @@ void printStream(int stream[20])
 	printf("\n");
 }
 
+int scoreValues[] = {0, 1, 3, 5, 7, 9, 11, 15, 20, 25, 30, 35, 40, 50, 60, 70, 85, 100, 150, 300};
+
+int calculateScore(int arr[], int size)
+{
+	int totalScore = 0;
+	int currentStreak = 1;
+	for (int i = 1; i < size; i++)
+	{
+		if (arr[i] >= arr[i - 1])
+		{
+			currentStreak++;
+		}
+		else
+		{
+			totalScore += scoreValues[currentStreak - 1];
+			currentStreak = 1;
+		}
+		printf("Index : %d | %d\n", i, currentStreak);
+	}
+
+	totalScore += scoreValues[currentStreak - 1];
+
+	return totalScore;
+}
+
 int main(int argc, char const *argv[])
 {
 	if (argc < 2)
@@ -99,6 +124,7 @@ int main(int argc, char const *argv[])
 	}
 
 	// TODO: calculate score
+	printf("score : %d\n", calculateScore(stream, 20));
 
 	// Send Score to server
 	// msg.code = SCORE;
