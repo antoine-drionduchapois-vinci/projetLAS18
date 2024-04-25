@@ -37,7 +37,7 @@ void endGame(Player *players, int size)
 
     for (int i = 0; i < size; i++)
     {
-        swrite(players[i].pipefd[1], &pipeMessage, sizeof(pipeMessage));
+        swrite(players[i].parentToChild[1], &pipeMessage, sizeof(pipeMessage));
     }
 }
 
@@ -50,7 +50,7 @@ void waitForScore(Player *players, int size, PlayerIpc  *playerIpcs) {
 
     for (int i = 0; i < size; i++) {
         StructMessage pipeMessage;
-        sread(players[i].pipefd[0], &pipeMessage, sizeof(StructMessage));
+        sread(players[i].childToParent[0], &pipeMessage, sizeof(StructMessage));
 
         // Stocker les informations dans PlayerIpc
         strcpy(playerIpcs[i].pseudo, players[i].pseudo);
