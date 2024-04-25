@@ -15,7 +15,7 @@ admin1: admin1.o utils_v1.o ipc.o
 server.o: server.c utils_v1.h messages.h network.h game.h ipc.h
 	$(CC) $(CCFLAGS) -c server.c
 
-client.o: client.c utils_v1.h messages.h network.h
+client.o: client.c utils_v1.h messages.h network.h ipc.h
 	$(CC) $(CCFLAGS) -c client.c
 
 admin1.o: admin1.c ipc.h utils_v1.h

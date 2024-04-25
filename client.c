@@ -5,6 +5,7 @@
 #include "messages.h"
 #include "utils_v1.h"
 #include "network.h"
+#include "ipc.h"
 
 void placeTile(int stream[20], int tile, int index)
 {
@@ -122,6 +123,23 @@ int main(int argc, char const *argv[])
 		sclose(sockfd);
 		exit(EXIT_SUCCESS); // TODO
 	}
+
+	if (msg.code == END_GAME)
+	{
+		/* code */
+		msg.code = SCORE;
+		msg.value = 10;
+		swrite(sockfd, &msg, sizeof(msg));
+
+		PlayerIpc ranking[MAX_PLAYERS];
+		sread(sockfd, &ranking,MAX_PLAYERS* sizeof(PlayerIpc));
+		    // Affichage du contenu du tableau ranking
+		printf("Classement :\n");
+		for (int i = 0; i < MAX_PLAYERS; i++) {
+			printf("Position %d - Joueur %d : Pseudo = %s, Score = %d\n", i+1, i, ranking[i].pseudo, ranking[i].score);
+		}
+	}
+	
 
 	// TODO: calculate score
 	printf("score : %d\n", calculateScore(stream, 20));
