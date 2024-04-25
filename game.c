@@ -32,7 +32,7 @@ void waitForPlayed(Player *players, int size)
 
 void endGame(Player *players, int size)
 {
-    pipeMessage.code = END_GAME;
+    pipeMessage.code = PIPE_END_GAME;
     
 
     for (int i = 0; i < size; i++)
@@ -49,8 +49,8 @@ void waitForScore(Player *players, int size, PlayerIpc  *playerIpcs) {
     }
 
     for (int i = 0; i < size; i++) {
-        StructMessage pipeMessage;
-        sread(players[i].childToParent[0], &pipeMessage, sizeof(StructMessage));
+       
+        sread(players[i].childToParent[0], &pipeMessage, sizeof(pipeMessage));
 
         // Stocker les informations dans PlayerIpc
         strcpy(playerIpcs[i].pseudo, players[i].pseudo);
