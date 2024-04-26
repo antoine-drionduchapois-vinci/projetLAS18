@@ -141,7 +141,7 @@ int main(int argc, char const *argv[])
 		{
 			printf("| %3d | %14s |  %3d  |\n", i, ranking[i].pseudo, ranking[i].score);
 		}
-		printf("--------------------------\n");
+		printf("--------------------------------\n");
 	}
 
 	sclose(sockfd);
