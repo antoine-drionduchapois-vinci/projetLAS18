@@ -140,7 +140,7 @@ int main(int argc, char const *argv[])
            "||/ / |  /       / /        //  | / /     //  | / /     //           //   | |\n"
            "|  /  | /     __/ /___     //   |/ /     //   |/ /     //____/ /    //    | |");
 
-		   printf("%3d",ranking[0].pseudo);
+		printf("\t\t\t%3d",ranking[0].pseudo);
 		   
 		printf("Classement :\n");
 		printf("--------------------------------\n");
