@@ -23,7 +23,7 @@ bool end = false;
 int tiles[20];
 int nbPLayers = 0;
 
-void inscriptions()
+bool inscriptions(int sockfd)
 {
 	end_inscriptions = 0;
 	alarm(TIME_INSCRIPTION);
@@ -69,8 +69,9 @@ void inscriptions()
 			sclose(players[i].sockfd);
 		}
 		printf("Temps de connexion écoulé !\n");
-		continue;
+		return false;
 	}
+	return true;
 }
 
 void restartInscriptions(int sig)
@@ -80,22 +81,23 @@ void restartInscriptions(int sig)
 
 void run_child(void *arg, void *arg1, void *arg2)
 {
+	// Get pipes
 	int *parentToChild = (int *)arg;
 	int *childToParent = (int *)arg1;
-	int sid = sem_get(RAKING_SEM_KEY, 1);
 	sclose(parentToChild[1]);
 	sclose(childToParent[0]);
+
+	// Get shared memory
+	int sid = sem_get(RAKING_SEM_KEY, 1);
 	int player_sockfd = *(int *)arg2;
 
 	StructMessage childPipeMessage;
 	StructMessage socketMessage;
 
+	// Child game loop
 	sread(parentToChild[0], &childPipeMessage, sizeof(childPipeMessage));
-
 	while (childPipeMessage.code == PIPE_TILE)
 	{
-		printf("child %d got tile : %d\n", getpid(), childPipeMessage.value);
-
 		// Setup socket message
 		socketMessage.code = TILE;
 		socketMessage.value = childPipeMessage.value;
@@ -115,25 +117,24 @@ void run_child(void *arg, void *arg1, void *arg2)
 		// Wait for parent message
 		sread(parentToChild[0], &childPipeMessage, sizeof(childPipeMessage));
 	}
-	if (childPipeMessage.code == PIPE_END_GAME)
-	{
-		// send end game to client
-		socketMessage.code = END_GAME;
-		swrite(player_sockfd, &socketMessage, sizeof(socketMessage));
-		// get score client
-		sread(player_sockfd, &socketMessage, sizeof(socketMessage));
-		// send score to parent
-		childPipeMessage.code = PIPE_SCORE;
-		childPipeMessage.value = socketMessage.value;
-		swrite(childToParent[1], &childPipeMessage, sizeof(childPipeMessage));
-		// get shared memory
-		sem_down0(sid);
-		PlayerIpc *childRanking = getSharedMemory();
-		swrite(player_sockfd, childRanking, MAX_PLAYERS * sizeof(PlayerIpc));
-		sem_up0(sid);
-	}
 
-	printf("child exit");
+	// Send end game to client
+	socketMessage.code = END_GAME;
+	swrite(player_sockfd, &socketMessage, sizeof(socketMessage));
+
+	// Get client score
+	sread(player_sockfd, &socketMessage, sizeof(socketMessage));
+
+	// Send score to parent
+	childPipeMessage.code = PIPE_SCORE;
+	childPipeMessage.value = socketMessage.value;
+	swrite(childToParent[1], &childPipeMessage, sizeof(childPipeMessage));
+
+	// Get shared memory
+	sem_down0(sid);
+	PlayerIpc *childRanking = getSharedMemory();
+	swrite(player_sockfd, childRanking, MAX_PLAYERS * sizeof(PlayerIpc));
+	sem_up0(sid);
 
 	exit(EXIT_SUCCESS);
 }
@@ -202,7 +203,9 @@ int main(int argc, char const *argv[])
 
 		// Begin inscription phase
 		printf("Début des inscriptions :\n");
-		inscriptions();
+		if (!inscriptions(sockfd))
+			printf("Okay");
+		;
 
 		// Get and lock shared memory
 		int sid = sem_get(RAKING_SEM_KEY, 1);
@@ -217,7 +220,7 @@ int main(int argc, char const *argv[])
 		}
 
 		// Set tiles array from the file
-		int filefd = sopen(fileName, O_RDONLY);
+		int filefd = sopen(fileName, O_RDONLY, 0666);
 
 		char bufRd[BUFFERSIZE];
 		sread(filefd, bufRd, BUFFERSIZE);
@@ -251,6 +254,7 @@ int main(int argc, char const *argv[])
 		}
 
 		// Game loop
+		printf("Début de la partie :\n");
 		for (int i = 0; i < 20; i++)
 		{
 			sendTile(players, nbPLayers, tiles[i]);
