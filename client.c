@@ -133,6 +133,15 @@ int main(int argc, char const *argv[])
 		PlayerIpc ranking[MAX_PLAYERS];
 		sread(sockfd, &ranking, MAX_PLAYERS * sizeof(PlayerIpc));
 		// Affichage du contenu du tableau ranking
+		  printf("           ___   ___\n"
+           "||   / |  / /       / /        /|    / /     /|    / /     //   / /     //   ) )\n"
+           "||  /  | / /       / /        //|   / /     //|   / /     //____       //___/ /\n"
+           "|| / /||/ /       / /        // |  / /     // |  / /     / ____       / ___ (\n"
+           "||/ / |  /       / /        //  | / /     //  | / /     //           //   | |\n"
+           "|  /  | /     __/ /___     //   |/ /     //   |/ /     //____/ /    //    | |");
+
+		printf("\t\t\t%3d",ranking[0].pseudo);
+		   
 		printf("Classement :\n");
 		printf("--------------------------------\n");
 		printf("| pos |     Joueur     | score |\n");
