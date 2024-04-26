@@ -12,13 +12,13 @@
 #include "messages.h"
 
 #define TIME_INSCRIPTION 15
-#define FILE_NAME "random"
 #define BUFFERSIZE 60
 
 StructMessage msg;
 Player players[MAX_PLAYERS];
 PlayerIpc ranking[MAX_PLAYERS];
 volatile sig_atomic_t end_inscriptions = 0;
+char fileName[256];
 bool end = false;
 
 void restartInscriptions(int sig)
@@ -48,13 +48,12 @@ void stopServer(int sig)
 
 	printf("Partie en cours, arrêt a la fin de la partie.\n");
 	end = true;
-
 }
 
-void killEverything(){
+void killEverything()
+{
 	printf("detruire ipc");
 	detachIpc();
-
 }
 
 void run_child(void *arg, void *arg1, void *arg2)
@@ -119,15 +118,15 @@ void run_child(void *arg, void *arg1, void *arg2)
 
 int main(int argc, char const *argv[])
 {
-	if (argc < 2)
+	if (argc < 3)
 	{
-		printf("Veuillez préciser le port en paramètres.\n");
-		exit(1);
+		printf("Veuillez préciser le port et le fichier tiles en paramètres.\n");
+		exit(EXIT_FAILURE);
 	}
 	int port = atoi(argv[1]);
 	int sockfd, newsockfd, i;
 
-	// int ret;
+	strcpy(fileName, argv[2]);
 
 	ssigaction(SIGALRM, restartInscriptions);
 
@@ -146,8 +145,7 @@ int main(int argc, char const *argv[])
 			printf("Arrêt du serveur...\n");
 			exit(EXIT_SUCCESS);
 		}
-		
-		
+
 		printf("Début des inscriptions :\n");
 		end_inscriptions = 0;
 		alarm(TIME_INSCRIPTION);
@@ -162,7 +160,7 @@ int main(int argc, char const *argv[])
 			if (newsockfd > 0)
 			{
 
-				/*ret = */ sread(newsockfd, &msg, sizeof(msg));
+				sread(newsockfd, &msg, sizeof(msg));
 
 				if (msg.code == INSCRIPTION_REQUEST)
 				{
@@ -179,7 +177,7 @@ int main(int argc, char const *argv[])
 						alarm(0);
 						end_inscriptions = 1;
 					}
-					/*ret = */ swrite(newsockfd, &msg, sizeof(msg));
+					swrite(newsockfd, &msg, sizeof(msg));
 					printf("Nombre d' Inscriptions : %i\n", nbPLayers);
 				}
 			}
@@ -194,7 +192,6 @@ int main(int argc, char const *argv[])
 			memory[i].score = 0;
 		}
 
-
 		if (nbPLayers < 2)
 		{
 			msg.code = CANCEL_GAME;
@@ -207,8 +204,7 @@ int main(int argc, char const *argv[])
 			continue;
 		}
 
-		// read "random" file TODO: use utils
-		int filefd = open(FILE_NAME, O_RDONLY);
+		int filefd = open(fileName, O_RDONLY);
 		checkNeg(filefd, "Error opening file");
 
 		char bufRd[BUFFERSIZE];
