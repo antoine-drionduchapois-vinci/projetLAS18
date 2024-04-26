@@ -51,7 +51,6 @@ int calculateScore(int arr[], int size)
 			totalScore += scoreValues[currentStreak - 1];
 			currentStreak = 1;
 		}
-		printf("Index : %d | %d\n", i, currentStreak);
 	}
 
 	totalScore += scoreValues[currentStreak - 1];
@@ -128,33 +127,22 @@ int main(int argc, char const *argv[])
 	{
 		/* code */
 		msg.code = SCORE;
-		msg.value = 10;
+		msg.value = calculateScore(stream, 20);
 		swrite(sockfd, &msg, sizeof(msg));
 
 		PlayerIpc ranking[MAX_PLAYERS];
-		sread(sockfd, &ranking,MAX_PLAYERS* sizeof(PlayerIpc));
-		    // Affichage du contenu du tableau ranking
+		sread(sockfd, &ranking, MAX_PLAYERS * sizeof(PlayerIpc));
+		// Affichage du contenu du tableau ranking
 		printf("Classement :\n");
-		for (int i = 0; i < MAX_PLAYERS; i++) {
-			printf("Position %d - Joueur %d : Pseudo = %s, Score = %d\n", i+1, i, ranking[i].pseudo, ranking[i].score);
+		printf("--------------------------------\n");
+		printf("| pos |     Joueur     | score |\n");
+		printf("|-----|----------------|-------|\n");
+		for (int i = 0; i < MAX_PLAYERS; i++)
+		{
+			printf("| %3d | %14s |  %3d  |\n", i, ranking[i].pseudo, ranking[i].score);
 		}
+		printf("--------------------------\n");
 	}
-	
 
-	// TODO: calculate score
-	printf("score : %d\n", calculateScore(stream, 20));
-
-	// Send Score to server
-	// msg.code = SCORE;
-	// msg.value = 0; // TODO: set score
-	// strcpy(msg.text, "");
-	// swrite(sockfd, &msg, sizeof(msg));
-
-	// READ RANKING
-	// sread(sockfd, &msg, sizeof(msg));
-	// printf("Ranking : %d", msg.value);
-
-	// Game finished
-	// Close socketFD
 	sclose(sockfd);
 }
