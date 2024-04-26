@@ -71,7 +71,16 @@ int main(int argc, char const *argv[])
 	int ret;
 
 	StructMessage msg;
+		printf("   _____ _                                
+		/ ____| |                               
+		| (___ | |_ _ __ ___  __ _ _ __ ___  ___ 
+		\___ \| __| '__/ _ \/ _` | '_ ` _ \/ __|
+		____) | |_| | |  __/ (_| | | | | | \__ \
+		|_____/ \__|_|  \___|\__,_|_| |_| |_|___/
+												
+												
 
+		");
 	printf("Bienvenue dans le programe d'inscription au serveur de jeu\n");
 	printf("Pour participer entrez votre nom :\n");
 	ret = sread(0, pseudo, MAX_CHAR);
