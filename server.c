@@ -27,20 +27,19 @@ void restartInscriptions(int sig)
 
 void trierTableau(PlayerIpc *tableauPlayers, int sz)
 {
-    for (int i = 0; i < sz - 1; ++i)
-    {
-        for (int j = 0; j < sz - i - 1; ++j)
-        {
-            if (tableauPlayers[j + 1].score > tableauPlayers[j].score)
-            {
-                PlayerIpc temp = tableauPlayers[j];
-                tableauPlayers[j] = tableauPlayers[j + 1];
-                tableauPlayers[j + 1] = temp;
-            }
-        }
-    }
+	for (int i = 0; i < sz - 1; ++i)
+	{
+		for (int j = 0; j < sz - i - 1; ++j)
+		{
+			if (tableauPlayers[j + 1].score > tableauPlayers[j].score)
+			{
+				PlayerIpc temp = tableauPlayers[j];
+				tableauPlayers[j] = tableauPlayers[j + 1];
+				tableauPlayers[j + 1] = temp;
+			}
+		}
+	}
 }
-
 
 // Signal to stop server
 void stopServer(int sig)
@@ -68,7 +67,6 @@ void run_child(void *arg, void *arg1, void *arg2)
 
 	StructMessage childPipeMessage;
 	StructMessage socketMessage;
-	
 
 	sread(parentToChild[0], &childPipeMessage, sizeof(childPipeMessage));
 
@@ -97,22 +95,21 @@ void run_child(void *arg, void *arg1, void *arg2)
 	}
 	if (childPipeMessage.code == PIPE_END_GAME)
 	{
-		//send end game to client
+		// send end game to client
 		socketMessage.code = END_GAME;
 		swrite(player_sockfd, &socketMessage, sizeof(socketMessage));
-		//get score client
+		// get score client
 		sread(player_sockfd, &socketMessage, sizeof(socketMessage));
-		//send score to parent
-		childPipeMessage.code = PIPE_SCORE;		
+		// send score to parent
+		childPipeMessage.code = PIPE_SCORE;
 		childPipeMessage.value = socketMessage.value;
 		swrite(childToParent[1], &childPipeMessage, sizeof(childPipeMessage));
-		//get shared memory
+		// get shared memory
 		sem_down0(sid);
 		PlayerIpc *childRanking = getSharedMemory();
 		swrite(player_sockfd, childRanking, MAX_PLAYERS * sizeof(PlayerIpc));
 		sem_up0(sid);
 	}
-	
 
 	printf("child exit");
 
@@ -133,7 +130,7 @@ int main(int argc, char const *argv[])
 
 	ssigaction(SIGALRM, restartInscriptions);
 
-	ssigaction(SIGUSR1, stopServer);
+	ssigaction(SIGINT, stopServer);
 
 	sockfd = initSocketServer(port);
 	printf("Le serveur tourne sur le port : %i \n", port);
@@ -143,14 +140,14 @@ int main(int argc, char const *argv[])
 	while (true)
 	{
 		int sid = sem_get(RAKING_SEM_KEY, 1);
-  		sem_down0(sid);
-		PlayerIpc* memory = getSharedMemory();
+		sem_down0(sid);
+		PlayerIpc *memory = getSharedMemory();
 		// Initialisation de la mémoire partagée avec un tableau vide
-		for (int i = 0; i < MAX_PLAYERS; i++) {
+		for (int i = 0; i < MAX_PLAYERS; i++)
+		{
 			strcpy(memory[i].pseudo, "");
 			memory[i].score = 0;
 		}
-
 
 		printf("Début des inscriptions :\n");
 		end_inscriptions = 0;
@@ -245,11 +242,12 @@ int main(int argc, char const *argv[])
 			sendTile(players, nbPLayers, tiles[i]);
 			waitForPlayed(players, nbPLayers);
 		}
-		endGame(players,nbPLayers);
-		waitForScore(players, nbPLayers,ranking);
+		endGame(players, nbPLayers);
+		waitForScore(players, nbPLayers, ranking);
 
-		trierTableau(ranking,nbPLayers);
-		for (int i = 0; i < MAX_PLAYERS; i++) {
+		trierTableau(ranking, nbPLayers);
+		for (int i = 0; i < MAX_PLAYERS; i++)
+		{
 			strcpy(memory[i].pseudo, ranking[i].pseudo);
 			memory[i].score = ranking[i].score;
 		}
