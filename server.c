@@ -19,6 +19,7 @@ Player players[MAX_PLAYERS];
 PlayerIpc ranking[MAX_PLAYERS];
 volatile sig_atomic_t end_inscriptions = 0;
 char fileName[256];
+bool end = false;
 
 void restartInscriptions(int sig)
 {
@@ -44,16 +45,15 @@ void trierTableau(PlayerIpc *tableauPlayers, int sz)
 // Signal to stop server
 void stopServer(int sig)
 {
-	if (!end_inscriptions)
-	{
-		printf("Partie en cours, arrêt impossible.\n");
-	}
-	else
-	{
-		printf("Arrêt du serveur...\n");
-		// Clean up resources (sockets, child processes, etc.)
-		exit(0);
-	}
+
+	printf("Partie en cours, arrêt a la fin de la partie.\n");
+	end = true;
+}
+
+void killEverything()
+{
+	printf("detruire ipc");
+	detachIpc();
 }
 
 void run_child(void *arg, void *arg1, void *arg2)
@@ -139,14 +139,11 @@ int main(int argc, char const *argv[])
 
 	while (true)
 	{
-		int sid = sem_get(RAKING_SEM_KEY, 1);
-		sem_down0(sid);
-		PlayerIpc *memory = getSharedMemory();
-		// Initialisation de la mémoire partagée avec un tableau vide
-		for (int i = 0; i < MAX_PLAYERS; i++)
+		if (end)
 		{
-			strcpy(memory[i].pseudo, "");
-			memory[i].score = 0;
+			killEverything();
+			printf("Arrêt du serveur...\n");
+			exit(EXIT_SUCCESS);
 		}
 
 		printf("Début des inscriptions :\n");
@@ -184,6 +181,15 @@ int main(int argc, char const *argv[])
 					printf("Nombre d' Inscriptions : %i\n", nbPLayers);
 				}
 			}
+		}
+		int sid = sem_get(RAKING_SEM_KEY, 1);
+		sem_down0(sid);
+		PlayerIpc *memory = getSharedMemory();
+		// Initialisation de la mémoire partagée avec un tableau vide
+		for (int i = 0; i < MAX_PLAYERS; i++)
+		{
+			strcpy(memory[i].pseudo, "");
+			memory[i].score = 0;
 		}
 
 		if (nbPLayers < 2)
