@@ -17,6 +17,7 @@
 StructMessage msg;
 Player players[MAX_PLAYERS];
 PlayerIpc ranking[MAX_PLAYERS];
+int sockfd;
 volatile sig_atomic_t end_inscriptions = 0;
 char fileName[256];
 bool end = false;
@@ -89,7 +90,7 @@ void run_child(void *arg, void *arg1, void *arg2)
 
 	// Get shared memory
 	int sid = sem_get(RAKING_SEM_KEY, 1);
-	int player_sockfd = *(int *)arg2;
+	int playerSockfd = *(int *)arg2;
 
 	StructMessage childPipeMessage;
 	StructMessage socketMessage;
@@ -103,10 +104,10 @@ void run_child(void *arg, void *arg1, void *arg2)
 		socketMessage.value = childPipeMessage.value;
 
 		// Send tile to client
-		swrite(player_sockfd, &socketMessage, sizeof(socketMessage));
+		swrite(playerSockfd, &socketMessage, sizeof(socketMessage));
 
 		// Wait for client response
-		sread(player_sockfd, &socketMessage, sizeof(socketMessage));
+		sread(playerSockfd, &socketMessage, sizeof(socketMessage));
 
 		// Setup pipe message
 		childPipeMessage.code = PIPE_PLAYED;
@@ -120,10 +121,10 @@ void run_child(void *arg, void *arg1, void *arg2)
 
 	// Send end game to client
 	socketMessage.code = END_GAME;
-	swrite(player_sockfd, &socketMessage, sizeof(socketMessage));
+	swrite(playerSockfd, &socketMessage, sizeof(socketMessage));
 
 	// Get client score
-	sread(player_sockfd, &socketMessage, sizeof(socketMessage));
+	sread(playerSockfd, &socketMessage, sizeof(socketMessage));
 
 	// Send score to parent
 	childPipeMessage.code = PIPE_SCORE;
@@ -133,8 +134,19 @@ void run_child(void *arg, void *arg1, void *arg2)
 	// Get shared memory
 	sem_down0(sid);
 	PlayerIpc *childRanking = getSharedMemory();
-	swrite(player_sockfd, childRanking, MAX_PLAYERS * sizeof(PlayerIpc));
+
+	// Write ranking in shared memory
+	swrite(playerSockfd, childRanking, MAX_PLAYERS * sizeof(PlayerIpc));
+
+	// Free access to shared memory
 	sem_up0(sid);
+
+	// Close socket
+	sclose(playerSockfd);
+
+	// Close pipes
+	sclose(parentToChild[0]);
+	sclose(childToParent[1]);
 
 	exit(EXIT_SUCCESS);
 }
@@ -158,13 +170,17 @@ void sortRanking(PlayerIpc *tableauPlayers, int sz)
 void stopServer(int sig)
 {
 
-	printf("Partie en cours, arrêt a la fin de la partie.\n");
+	printf(" : Partie en cours, arrêt à la fin de la partie.\n");
 	end = true;
 }
 
 void killEverything()
 {
-	printf("detruire ipc");
+	// Close listening socket
+	printf("Fermeture du socket d'écoute...\n");
+	sclose(sockfd);
+
+	printf("Destruction IPC...\n");
 	detachIpc();
 }
 
@@ -187,7 +203,7 @@ int main(int argc, char const *argv[])
 	createIpc();
 
 	// Init socket for listening
-	int sockfd = initSocketServer(port);
+	sockfd = initSocketServer(port);
 	printf("Le serveur tourne sur le port : %i \n", port);
 
 	// Infinite server loop
@@ -275,7 +291,17 @@ int main(int argc, char const *argv[])
 		// Free shared memory
 		sem_up0(sid);
 
+		// Close pipes
+		for (int i = 0; i < nbPLayers; i++)
+		{
+			sclose(players[i].parentToChild[1]);
+			sclose(players[i].childToParent[0]);
+		}
+
 		// Wait for children to end their task
 		swait(0);
+
+		// Reset players table
+		nbPLayers = 0;
 	}
 }
