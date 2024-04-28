@@ -138,7 +138,7 @@ int main(int argc, char const *argv[])
 	{
 		printf("Partie annulée par le serveur!\n");
 		sclose(sockfd);
-		exit(EXIT_SUCCESS); // TODO
+		endProgram(EXIT_SUCCESS);
 	}
 
 	// End of the game
