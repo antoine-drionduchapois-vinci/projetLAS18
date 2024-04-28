@@ -7,6 +7,21 @@
 #include "network.h"
 #include "ipc.h"
 
+int scoreValues[] = {0, 1, 3, 5, 7, 9, 11, 15, 20, 25, 30, 35, 40, 50, 60, 70, 85, 100, 150, 300};
+
+char pseudo[MAX_CHAR];
+int sockfd;
+StructMessage msg;
+int stream[20] = {0};
+
+void endProgram(int code)
+{
+	printf("Fermeture du socket...");
+	sclose(sockfd);
+	printf("Arrêt du jeu...");
+	exit(code);
+}
+
 void placeTile(int stream[20], int tile, int index)
 {
 	int i = index;
@@ -34,8 +49,6 @@ void printStream(int stream[20])
 	printf("\n");
 }
 
-int scoreValues[] = {0, 1, 3, 5, 7, 9, 11, 15, 20, 25, 30, 35, 40, 50, 60, 70, 85, 100, 150, 300};
-
 int calculateScore(int arr[], int size)
 {
 	int totalScore = 0;
@@ -60,52 +73,50 @@ int calculateScore(int arr[], int size)
 
 int main(int argc, char const *argv[])
 {
+	// Get port in program params
 	if (argc < 2)
 	{
 		printf("Veuillez préciser le port en paramètres.\n");
 		exit(1);
 	}
 	int port = atoi(argv[1]);
-	char pseudo[MAX_CHAR];
-	int sockfd;
-	int ret;
 
-	StructMessage msg;
-  	printf("   _____ _                                \n"
-           "  / ____| |                               \n"
-           " | (___ | |_ _ __ ___  __ _ _ __ ___  ___ \n"
-           "  ___ | __| '__/ _  |/ _` | '_ ` _  |/ __|\n"
-           " ____) | |_| | |  __/ (_| | | | | |  __ \n"
-           " |_____/ |__|_||____|__,_|__| |_| |_|___/\n"
-         );
-	printf("Bienvenue dans le programe d'inscription au serveur de jeu\n");
+	// Print welcome message
+	printf("   _____ _                                \n"
+		   "  / ____| |                               \n"
+		   " | (___ | |_ _ __ ___  __ _ _ __ ___  ___ \n"
+		   "  ___ | __| '__/ _  |/ _` | '_ ` _  |/ __|\n"
+		   " ____) | |_| | |  __/ (_| | | | | |  __ \n"
+		   " |_____/ |__|_||____|__,_|__| |_| |_|___/\n");
+	printf("Bienvenue dans le programe d'inscription au serveur de jeu.\n");
+
+	// Read player pseudo
 	printf("Pour participer entrez votre nom :\n");
-	ret = sread(0, pseudo, MAX_CHAR);
-	checkNeg(ret, "read client error");
-	pseudo[ret - 1] = '\0';
+	int lenght = sread(0, pseudo, MAX_CHAR);
+	pseudo[lenght - 1] = '\0';
 	strcpy(msg.text, pseudo);
-	msg.code = INSCRIPTION_REQUEST;
 
+	// Init client socket
 	sockfd = initSocketClient(SERVER_IP, port);
 
+	// Send inscription request
+	msg.code = INSCRIPTION_REQUEST;
 	swrite(sockfd, &msg, sizeof(msg));
 
+	// Wait for server response
 	sread(sockfd, &msg, sizeof(msg));
-
-	switch (msg.code)
+	if (msg.code == INSCRIPTION_OK)
+		printf("Inscription acceptée !");
+	else
 	{
-	case INSCRIPTION_OK:
-		printf("Réponse du serveur : Inscription acceptée\n");
-		break;
-	default:
-		printf("Réponse du serveur non prévue %d\n", msg.code);
-		break;
+		printf("Inscription refusée !");
+		endProgram(EXIT_SUCCESS);
 	}
 
-	// Client Game
-	int stream[20] = {0};
+	// Wait for server tile
 	sread(sockfd, &msg, sizeof(msg));
 
+	// Game loop
 	while (msg.code == TILE)
 	{
 		printf("Placer la tuile '%d' : ", msg.value);
@@ -118,10 +129,11 @@ int main(int argc, char const *argv[])
 		msg.code = PLAYED;
 		swrite(sockfd, &msg, sizeof(msg));
 
-		// Wait for new tile
+		// Wait for new tile from server
 		sread(sockfd, &msg, sizeof(msg));
 	}
 
+	// Inscriptions timed out
 	if (msg.code == CANCEL_GAME)
 	{
 		printf("Partie annulée par le serveur!\n");
@@ -129,28 +141,31 @@ int main(int argc, char const *argv[])
 		exit(EXIT_SUCCESS); // TODO
 	}
 
+	// End of the game
 	if (msg.code == END_GAME)
 	{
-		/* code */
+		// Send score to server
 		msg.code = SCORE;
 		msg.value = calculateScore(stream, 20);
 		swrite(sockfd, &msg, sizeof(msg));
 
+		// Wait for server to send ranking
 		PlayerIpc ranking[MAX_PLAYERS];
 		sread(sockfd, &ranking, MAX_PLAYERS * sizeof(PlayerIpc));
-		// Affichage du contenu du tableau ranking
-		 printf("*********************************************************************************\n");
-		  printf("           \n"
-		   "      _    __      __  __           __            __      _______      ______\n"   
-           "||   / |  / /       / /      /|    / /     /|    / /     /______ /    //   ) )\n"
-           "||  /  | / /       / /      //|   / /     //|   / /     //_____      //___/ /\n"
-           "|| / /||/ /       / /      // |  / /     // |  / /     / _____ /    / ___ (\n"
-           "||/ / |  /       / /      //  | / /     //  | / /     //_____      //   | |\n"
-           "|  /  | /     __/ /__    //   |/ /     //   |/ /     /______ /    //    | |\n");
 
-		printf("\t\t\t\t%14s\n\n",ranking[0].pseudo);
+		// Print ranking
 		printf("*********************************************************************************\n");
-		   
+		printf("           \n"
+			   "      _    __      __  __           __            __      _______      ______\n"
+			   "||   / |  / /       / /      /|    / /     /|    / /     /______ /    //   ) )\n"
+			   "||  /  | / /       / /      //|   / /     //|   / /     //_____      //___/ /\n"
+			   "|| / /||/ /       / /      // |  / /     // |  / /     / _____ /    / ___ (\n"
+			   "||/ / |  /       / /      //  | / /     //  | / /     //_____      //   | |\n"
+			   "|  /  | /     __/ /__    //   |/ /     //   |/ /     /______ /    //    | |\n");
+
+		printf("\t\t\t\t%14s\n\n", ranking[0].pseudo);
+		printf("*********************************************************************************\n");
+
 		printf("Classement :\n");
 		printf("--------------------------------\n");
 		printf("| pos |     Joueur     | score |\n");
@@ -162,5 +177,6 @@ int main(int argc, char const *argv[])
 		printf("--------------------------------\n");
 	}
 
-	sclose(sockfd);
+	// End program
+	endProgram(EXIT_SUCCESS);
 }
