@@ -22,7 +22,7 @@ void endProgram(int code)
 	exit(code);
 }
 
-void placeTile(int stream[20], int tile, int index)
+void placeTile(int tile, int index)
 {
 	int i = index;
 	while (stream[i] != 0)
@@ -35,18 +35,20 @@ void placeTile(int stream[20], int tile, int index)
 	stream[i] = tile;
 }
 
-void printStream(int stream[20])
+void printStream(int remaining)
 {
+	printf("Tuiles restantes : %d\n", remaining);
+	printf("*********************************************************************************\n|");
 	for (int i = 0; i < 20; i++)
 	{
 		printf("%3d|", i + 1);
 	}
-	printf("\n");
+	printf("\n|");
 	for (int i = 0; i < 20; i++)
 	{
 		printf("%3d|", stream[i]);
 	}
-	printf("\n");
+	printf("\n*********************************************************************************\n");
 }
 
 int calculateScore(int arr[], int size)
@@ -106,10 +108,10 @@ int main(int argc, char const *argv[])
 	// Wait for server response
 	sread(sockfd, &msg, sizeof(msg));
 	if (msg.code == INSCRIPTION_OK)
-		printf("Inscription acceptée !");
+		printf("Inscription acceptée !\n");
 	else
 	{
-		printf("Inscription refusée !");
+		printf("Inscription refusée !\n");
 		endProgram(EXIT_SUCCESS);
 	}
 
@@ -117,19 +119,23 @@ int main(int argc, char const *argv[])
 	sread(sockfd, &msg, sizeof(msg));
 
 	// Game loop
+	int turn = 0;
+	printStream(20 - turn);
 	while (msg.code == TILE)
 	{
+		turn++;
 		printf("Placer la tuile '%d' : ", msg.value);
 
 		// Place tile
-		placeTile(stream, msg.value, atoi(readLine()) - 1);
-		printStream(stream);
+		placeTile(msg.value, atoi(readLine()) - 1);
+		printStream(20 - turn);
 
 		// Send "Played" to server
 		msg.code = PLAYED;
 		swrite(sockfd, &msg, sizeof(msg));
 
 		// Wait for new tile from server
+		printf("Attente des autres joueurs...\n");
 		sread(sockfd, &msg, sizeof(msg));
 	}
 
