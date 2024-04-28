@@ -186,6 +186,10 @@ int main(int argc, char const *argv[])
 	// Init IPC
 	createIpc();
 
+	// Init socket for listening
+	int sockfd = initSocketServer(port);
+	printf("Le serveur tourne sur le port : %i \n", port);
+
 	// Infinite server loop
 	while (true)
 	{
@@ -197,15 +201,10 @@ int main(int argc, char const *argv[])
 			exit(EXIT_SUCCESS);
 		}
 
-		// Init socket for listening
-		int sockfd = initSocketServer(port);
-		printf("Le serveur tourne sur le port : %i \n", port);
-
 		// Begin inscription phase
 		printf("Début des inscriptions :\n");
 		if (!inscriptions(sockfd))
-			printf("Okay");
-		;
+			continue;
 
 		// Get and lock shared memory
 		int sid = sem_get(RAKING_SEM_KEY, 1);
