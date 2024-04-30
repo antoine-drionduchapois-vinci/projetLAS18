@@ -178,7 +178,7 @@ int main(int argc, char const *argv[])
 		printf("|-----|----------------|-------|\n");
 		for (int i = 0; i < MAX_PLAYERS; i++)
 		{
-			printf("| %3d | %14s |  %3d  |\n", i, ranking[i].pseudo, ranking[i].score);
+			printf("| %3d | %14s |  %3d  |\n", i + 1, ranking[i].pseudo, ranking[i].score);
 		}
 		printf("--------------------------------\n");
 	}
