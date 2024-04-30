@@ -94,8 +94,7 @@ int main(int argc, char const *argv[])
 
 	// Read player pseudo
 	printf("Pour participer entrez votre nom :\n");
-	int lenght = sread(0, pseudo, MAX_CHAR);
-	pseudo[lenght - 1] = '\0';
+	strcpy(pseudo, readLine());
 	strcpy(msg.text, pseudo);
 
 	// Init client socket
