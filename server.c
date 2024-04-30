@@ -7,8 +7,6 @@ Drion Antoine
 
 */
 
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,8 +21,6 @@ Drion Antoine
 #include "game.h"
 #include "messages.h"
 
-
-
 #define TIME_INSCRIPTION 15
 #define BUFFERSIZE 60
 
@@ -36,8 +32,23 @@ struct pollfd fds[1024];
 volatile sig_atomic_t end_inscriptions = 0;
 char fileName[256];
 bool end = false;
+int existingTiles[40] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 19, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
 int tiles[20];
 int nbPLayers = 0;
+
+void generateRandomTiles(int *tiles, int size)
+{
+	for (int i = 0; i < size; i++)
+	{
+		int random = rand() % 39;
+		while (existingTiles[random] == 0)
+		{
+			random = rand() % 39;
+		}
+		tiles[i] = existingTiles[random];
+		existingTiles[random] = 0;
+	}
+}
 
 bool inscriptions(int sockfd)
 {
@@ -202,13 +213,36 @@ void killEverything()
 int main(int argc, char const *argv[])
 {
 	// Get program params
-	if (argc < 3)
+	if (argc < 2)
 	{
 		printf("Veuillez préciser le port et le fichier tiles en paramètres.\n");
 		exit(EXIT_FAILURE);
 	}
 	int port = atoi(argv[1]);
-	strcpy(fileName, argv[2]);
+
+	// Set tiles array from the file if a file is passed in params
+	if (argc > 2)
+	{
+		int filefd = sopen(argv[2], O_RDONLY, 0666);
+
+		char bufRd[BUFFERSIZE];
+		sread(filefd, bufRd, BUFFERSIZE);
+		char *delim = "\n";
+		char *token;
+		int i = 0;
+		token = strtok(bufRd, delim);
+
+		while (token != NULL && i < 20)
+		{
+			tiles[i] = atoi(token);
+			token = strtok(NULL, delim);
+			i++;
+		}
+	}
+	else
+	{
+		generateRandomTiles(tiles, 20);
+	}
 
 	// Set interuption actions
 	ssigaction(SIGALRM, restartInscriptions);
@@ -247,23 +281,6 @@ int main(int argc, char const *argv[])
 		{
 			strcpy(memory[i].pseudo, "");
 			memory[i].score = 0;
-		}
-
-		// Set tiles array from the file
-		int filefd = sopen(fileName, O_RDONLY, 0666);
-
-		char bufRd[BUFFERSIZE];
-		sread(filefd, bufRd, BUFFERSIZE);
-		char *delim = "\n";
-		char *token;
-		int i = 0;
-		token = strtok(bufRd, delim);
-
-		while (token != NULL && i < 20)
-		{
-			tiles[i] = atoi(token);
-			token = strtok(NULL, delim);
-			i++;
 		}
 
 		// Setup pipes, poll and fork for every players
