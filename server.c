@@ -1,3 +1,13 @@
+
+/*
+LAS Groupe 18
+Dubois Josué
+Rousseaux Diego
+Drion Antoine
+*/
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +20,8 @@
 #include "ipc.h"
 #include "game.h"
 #include "messages.h"
+
+
 
 #define TIME_INSCRIPTION 15
 #define BUFFERSIZE 60
