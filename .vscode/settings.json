@@ -2,6 +2,7 @@
   "C_Cpp.errorSquiggles": "disabled",
   "files.associations": {
     "messages.h": "c",
-    "utils_v1.h": "c"
+    "utils_v1.h": "c",
+    "in.h": "c"
   }
 }

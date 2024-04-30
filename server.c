@@ -18,6 +18,7 @@ StructMessage msg;
 Player players[MAX_PLAYERS];
 PlayerIpc ranking[MAX_PLAYERS];
 int sockfd;
+struct pollfd fds[1024];
 volatile sig_atomic_t end_inscriptions = 0;
 char fileName[256];
 bool end = false;
@@ -251,11 +252,13 @@ int main(int argc, char const *argv[])
 			i++;
 		}
 
-		// Setup pipes and fork for every players
+		// Setup pipes, poll and fork for every players
 		for (int i = 0; i < nbPLayers; i++)
 		{
 			spipe(players[i].parentToChild);
 			spipe(players[i].childToParent);
+			fds[i].fd = players[i].childToParent[0];
+			fds[i].events = POLLIN;
 			players[i].pid = fork_and_run3(run_child, players[i].parentToChild, players[i].childToParent, &players[i].sockfd);
 
 			if (players[i].pid < 0)
@@ -273,7 +276,7 @@ int main(int argc, char const *argv[])
 		for (int i = 0; i < 20; i++)
 		{
 			sendTile(players, nbPLayers, tiles[i]);
-			waitForPlayed(players, nbPLayers);
+			waitForPlayed(fds, nbPLayers);
 		}
 
 		// End of the game

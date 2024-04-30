@@ -10,7 +10,6 @@ int turn = 0;
 
 void sendTile(Player *players, int size, int tile)
 {
-
     pipeMessage.code = PIPE_TILE;
     pipeMessage.value = tile;
 
@@ -20,12 +19,21 @@ void sendTile(Player *players, int size, int tile)
     }
 }
 
-void waitForPlayed(Player *players, int size)
+void waitForPlayed(struct pollfd *fds, int size)
 {
+    printf("Attente de %d joueurs.\n", size);
     for (int i = 0; i < size; i++)
     {
-        sread(players[i].childToParent[0], &pipeMessage, sizeof(pipeMessage));
-        printf("%s a joué\n", players[i].pseudo);
+        spoll(fds, size, -1);
+
+        for (int j = 0; j < size; j++)
+        {
+            if (fds[j].revents & POLLIN)
+            {
+                sread(fds[j].fd, &pipeMessage, sizeof(pipeMessage));
+                printf("Attente de %d joueurs.\n", size - i - 1);
+            }
+        }
     }
 }
 

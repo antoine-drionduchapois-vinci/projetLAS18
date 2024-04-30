@@ -4,6 +4,7 @@
 #define MAX_CHAR 256
 
 #include "ipc.h"
+#include <poll.h>
 
 typedef struct Player
 {
@@ -17,10 +18,10 @@ typedef struct Player
 
 void sendTile(Player *players, int size, int tile);
 
-void waitForPlayed(Player *players, int size);
+void waitForPlayed(struct pollfd *fds, int size);
 
 void endGame(Player *players, int size);
 
-void waitForScore(Player *players, int size, PlayerIpc  *playerIpcs);
+void waitForScore(Player *players, int size, PlayerIpc *playerIpcs);
 
 #endif
