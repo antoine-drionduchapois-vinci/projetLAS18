@@ -47,9 +47,8 @@ void endGame(Player *players, int size)
     }
 }
 
-void waitForScore(Player *players, int size, PlayerIpc *playerIpcs)
+void waitForScore(Player *players, struct pollfd *fds, int size, PlayerIpc *playerIpcs)
 {
-    // Assurez-vous que size ne dépasse pas MAX_PLAYERS
     if (size > MAX_PLAYERS)
     {
         printf("Erreur : Le nombre de joueurs dépasse la limite maximale.\n");
@@ -57,13 +56,17 @@ void waitForScore(Player *players, int size, PlayerIpc *playerIpcs)
 
     for (int i = 0; i < size; i++)
     {
+        spoll(fds, size, -1);
 
-        sread(players[i].childToParent[0], &pipeMessage, sizeof(pipeMessage));
-
-        // Stocker les informations dans PlayerIpc
-        strcpy(playerIpcs[i].pseudo, players[i].pseudo);
-        playerIpcs[i].score = pipeMessage.value;
-
-        printf("%s a terminé avec un score de %d.\n", playerIpcs[i].pseudo, playerIpcs[i].score);
+        for (int j = 0; j < size; j++)
+        {
+            if (fds[j].revents & POLLIN)
+            {
+                sread(fds[i].fd, &pipeMessage, sizeof(pipeMessage));
+                strcpy(playerIpcs[i].pseudo, players[i].pseudo);
+                playerIpcs[i].score = pipeMessage.value;
+                printf("%s a terminé avec un score de %d.\n", playerIpcs[i].pseudo, playerIpcs[i].score);
+            }
+        }
     }
 }

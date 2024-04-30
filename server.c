@@ -281,7 +281,7 @@ int main(int argc, char const *argv[])
 
 		// End of the game
 		endGame(players, nbPLayers);
-		waitForScore(players, nbPLayers, ranking);
+		waitForScore(players, fds, nbPLayers, ranking);
 
 		// Set ranking in IPC
 		sortRanking(ranking, nbPLayers);
