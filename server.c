@@ -21,7 +21,7 @@ Drion Antoine
 #include "game.h"
 #include "messages.h"
 
-#define TIME_INSCRIPTION 15
+#define TIME_INSCRIPTION 30
 #define BUFFERSIZE 60
 
 StructMessage msg;
