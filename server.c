@@ -339,3 +339,7 @@ int main(int argc, char const *argv[])
 		nbPLayers = 0;
 	}
 }
+
+// Josué Dubois
+// Diego Rousseaux
+// Antoine Drion
