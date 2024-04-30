@@ -14,6 +14,7 @@ Drion Antoine
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <stdbool.h>
 #include "utils_v1.h"
