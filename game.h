@@ -22,6 +22,6 @@ void waitForPlayed(struct pollfd *fds, int size);
 
 void endGame(Player *players, int size);
 
-void waitForScore(Player *players, int size, PlayerIpc *playerIpcs);
+void waitForScore(Player *players, struct pollfd *fds, int size, PlayerIpc *playerIpcs);
 
 #endif

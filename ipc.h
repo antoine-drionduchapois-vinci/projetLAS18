@@ -1,7 +1,7 @@
 #ifndef _IPC_H_
 #define _IPC_H_
 
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 5
 
 #define PERM 0666
 #define MAX 256
@@ -16,8 +16,6 @@ typedef struct PlayerIpc
 	char pseudo[MAX];
 	int score;
 } PlayerIpc;
-
-
 
 void createIpc();
 
